@@ -166,6 +166,14 @@ async function navigateAndInjectTokens(
            url === ''
   }
   
+  // 构建带有 token 数据的 URL（通过 URL 参数传递给 content script）
+  const buildUrlWithTokens = (baseUrl: string, tokens: Record<string, string>): string => {
+    const url = new URL(baseUrl)
+    const tokenData = JSON.stringify({ tokens })
+    url.searchParams.set('__peaks_login_inject__', encodeURIComponent(tokenData))
+    return url.toString()
+  }
+  
   // 提取 URL 的基础部分（不含 query string 和 hash）用于比较
   const getBaseUrl = (url: string) => url.split('?')[0].split('#')[0]
   const currentBaseUrl = getBaseUrl(currentUrl)
@@ -179,74 +187,16 @@ async function navigateAndInjectTokens(
     console.log("[Peaks Login] Current tab is restricted URL, will navigate to target:", currentUrl)
   }
   
-  // 使用 webNavigation.onCommitted 来尽早注入 token（在页面 JS 执行之前）
-  const injectOnCommitted = (): Promise<void> => {
-    return new Promise((resolve) => {
-      let injected = false
-      
-      const onCommittedListener = async (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-        // 只处理目标 tab 的主框架导航
-        if (details.tabId === tabId && details.frameId === 0 && !injected) {
-          injected = true
-          chrome.webNavigation.onCommitted.removeListener(onCommittedListener)
-          console.log("[Peaks Login] onCommitted fired, injecting tokens immediately...")
-          
-          // 立即注入 token（此时页面 JS 还未执行）
-          try {
-            await injectTokensToPage(tabId, tokens, false)
-            console.log("[Peaks Login] Early injection successful")
-          } catch (error) {
-            console.error("[Peaks Login] Early injection failed:", error)
-          }
-          resolve()
-        }
-      }
-      
-      chrome.webNavigation.onCommitted.addListener(onCommittedListener)
-      
-      // 超时保护
-      setTimeout(() => {
-        if (!injected) {
-          chrome.webNavigation.onCommitted.removeListener(onCommittedListener)
-          console.log("[Peaks Login] Timeout waiting for onCommitted")
-          resolve()
-        }
-      }, 10000)
-    })
-  }
-
-  if (isOnTargetPage) {
-    // 已经在目标页面，需要刷新并在页面加载时注入
-    console.log("[Peaks Login] Already on target page, will refresh and inject early...")
-    console.log("[Peaks Login] Current URL:", currentUrl)
-    
-    // 先设置监听器
-    const injectPromise = injectOnCommitted()
-    
-    // 然后刷新页面
-    console.log("[Peaks Login] Reloading page...")
-    await chrome.tabs.reload(tabId)
-    
-    // 等待注入完成
-    await injectPromise
-    
-    console.log("[Peaks Login] Token injection after reload completed")
-  } else {
-    // 需要导航到目标页面
-    console.log("[Peaks Login] Current URL:", currentUrl)
-    console.log("[Peaks Login] Navigating to:", trimmedUrl)
-    
-    // 先设置监听器
-    const injectPromise = injectOnCommitted()
-    
-    // 然后导航
-    await chrome.tabs.update(tabId, { url: trimmedUrl })
-    
-    // 等待注入完成
-    await injectPromise
-  }
+  // 构建带 token 参数的目标 URL
+  const urlWithTokens = buildUrlWithTokens(trimmedUrl, tokens)
+  console.log("[Peaks Login] URL with tokens:", urlWithTokens)
   
-  console.log("[Peaks Login] Token injection completed successfully")
+  // 无论是否在目标页面，都导航到带 token 参数的 URL
+  // content script 会在 document_start 时读取参数并注入
+  console.log("[Peaks Login] Navigating to URL with token params...")
+  await chrome.tabs.update(tabId, { url: urlWithTokens })
+  
+  console.log("[Peaks Login] Navigation triggered, content script will handle injection")
 }
 
 // 安全地发送响应，避免消息通道关闭时报错
