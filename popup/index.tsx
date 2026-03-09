@@ -255,7 +255,7 @@ function PopupIndex() {
               <SelectTrigger className={`bg-background border-border hover:border-primary/50 transition-colors ${validationErrors.cas ? 'border-destructive' : ''}`}>
                 <SelectValue placeholder={t("selectCasAddress")} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent disablePortal>
                 {settings.casConfigs.map((cas) => (
                   <SelectItem key={cas.id} value={cas.id}>
                     {cas.name}
@@ -280,7 +280,7 @@ function PopupIndex() {
               <SelectTrigger className={`bg-background border-border hover:border-primary/50 transition-colors ${validationErrors.account ? 'border-destructive' : ''}`}>
                 <SelectValue placeholder={t("selectAccount")} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent disablePortal>
                 {settings.accounts.map((account) => (
                   <SelectItem key={account.id} value={account.id}>
                     {account.name} ({account.username})
@@ -302,7 +302,7 @@ function PopupIndex() {
               <SelectTrigger className={`bg-background border-border hover:border-primary/50 transition-colors ${validationErrors.callback ? 'border-destructive' : ''}`}>
                 <SelectValue placeholder={t("selectCallbackAddress")} />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent disablePortal>
                 {settings.callbackConfigs.map((callback) => (
                   <SelectItem key={callback.id} value={callback.id}>
                     {callback.name}
@@ -335,7 +335,7 @@ function PopupIndex() {
                       <SelectTrigger className="bg-background border-border hover:border-primary/50 transition-colors h-9">
                         <SelectValue placeholder={t("selectTokenSource")} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent disablePortal>
                         {settings.casConfigs.map((cas) => (
                           <SelectItem key={cas.id} value={cas.id}>
                             {cas.name} ({cas.tokenResponseKey || "token"})
