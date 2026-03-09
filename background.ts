@@ -179,41 +179,56 @@ async function navigateAndInjectTokens(
     console.log("[Peaks Login] Current tab is restricted URL, will navigate to target:", currentUrl)
   }
   
-  if (isOnTargetPage) {
-    // 已经在目标页面，先刷新页面，等待加载完成后再注入 tokens
-    console.log("[Peaks Login] Already on target page, refreshing first then injecting tokens...")
-    console.log("[Peaks Login] Current URL:", currentUrl)
-    
-    // 先刷新页面
-    console.log("[Peaks Login] Reloading page...")
-    await chrome.tabs.reload(tabId)
-    
-    // 等待页面加载完成
-    await new Promise<void>((resolve) => {
-      const listener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
-        if (updatedTabId === tabId && changeInfo.status === "complete") {
-          chrome.tabs.onUpdated.removeListener(listener)
-          console.log("[Peaks Login] Page reload complete")
+  // 使用 webNavigation.onCommitted 来尽早注入 token（在页面 JS 执行之前）
+  const injectOnCommitted = (): Promise<void> => {
+    return new Promise((resolve) => {
+      let injected = false
+      
+      const onCommittedListener = async (details: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
+        // 只处理目标 tab 的主框架导航
+        if (details.tabId === tabId && details.frameId === 0 && !injected) {
+          injected = true
+          chrome.webNavigation.onCommitted.removeListener(onCommittedListener)
+          console.log("[Peaks Login] onCommitted fired, injecting tokens immediately...")
+          
+          // 立即注入 token（此时页面 JS 还未执行）
+          try {
+            await injectTokensToPage(tabId, tokens, false)
+            console.log("[Peaks Login] Early injection successful")
+          } catch (error) {
+            console.error("[Peaks Login] Early injection failed:", error)
+          }
           resolve()
         }
       }
-      chrome.tabs.onUpdated.addListener(listener)
+      
+      chrome.webNavigation.onCommitted.addListener(onCommittedListener)
       
       // 超时保护
       setTimeout(() => {
-        chrome.tabs.onUpdated.removeListener(listener)
-        console.log("[Peaks Login] Timeout waiting for page reload, proceeding anyway...")
-        resolve()
-      }, 15000)
+        if (!injected) {
+          chrome.webNavigation.onCommitted.removeListener(onCommittedListener)
+          console.log("[Peaks Login] Timeout waiting for onCommitted")
+          resolve()
+        }
+      }, 10000)
     })
+  }
+
+  if (isOnTargetPage) {
+    // 已经在目标页面，需要刷新并在页面加载时注入
+    console.log("[Peaks Login] Already on target page, will refresh and inject early...")
+    console.log("[Peaks Login] Current URL:", currentUrl)
     
-    // 额外等待，确保页面 JS 初始化完成
-    console.log("[Peaks Login] Waiting additional 1000ms for page initialization...")
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // 先设置监听器
+    const injectPromise = injectOnCommitted()
     
-    // 注入 tokens
-    console.log("[Peaks Login] Injecting tokens to page...")
-    await injectTokensToPage(tabId, tokens, false)
+    // 然后刷新页面
+    console.log("[Peaks Login] Reloading page...")
+    await chrome.tabs.reload(tabId)
+    
+    // 等待注入完成
+    await injectPromise
     
     console.log("[Peaks Login] Token injection after reload completed")
   } else {
@@ -221,36 +236,14 @@ async function navigateAndInjectTokens(
     console.log("[Peaks Login] Current URL:", currentUrl)
     console.log("[Peaks Login] Navigating to:", trimmedUrl)
     
+    // 先设置监听器
+    const injectPromise = injectOnCommitted()
+    
+    // 然后导航
     await chrome.tabs.update(tabId, { url: trimmedUrl })
     
-    console.log("[Peaks Login] Waiting for page to load...")
-    
-    // 等待页面加载完成
-    await new Promise<void>((resolve) => {
-      const listener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
-        if (updatedTabId === tabId && changeInfo.status === "complete") {
-          chrome.tabs.onUpdated.removeListener(listener)
-          console.log("[Peaks Login] Page load complete")
-          resolve()
-        }
-      }
-      chrome.tabs.onUpdated.addListener(listener)
-      
-      // 超时保护
-      setTimeout(() => {
-        chrome.tabs.onUpdated.removeListener(listener)
-        console.log("[Peaks Login] Timeout waiting for page load, proceeding anyway...")
-        resolve()
-      }, 15000)
-    })
-    
-    // 额外等待，确保页面 JS 初始化完成
-    console.log("[Peaks Login] Waiting additional 1000ms for page initialization...")
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // 注入 tokens
-    console.log("[Peaks Login] Injecting tokens to page...")
-    await injectTokensToPage(tabId, tokens, false)
+    // 等待注入完成
+    await injectPromise
   }
   
   console.log("[Peaks Login] Token injection completed successfully")

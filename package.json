@@ -46,7 +46,8 @@
       "storage",
       "scripting",
       "tabs",
-      "declarativeNetRequest"
+      "declarativeNetRequest",
+      "webNavigation"
     ],
     "host_permissions": [
       "https://*/*",
