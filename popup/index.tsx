@@ -37,6 +37,11 @@ function PopupIndex() {
   const [loading, setLoading] = useState(true)
   const [loginStatus, setLoginStatus] = useState<LoginStatus>("idle")
   const [errorMessage, setErrorMessage] = useState<string>("")
+  const [validationErrors, setValidationErrors] = useState<{
+    cas?: boolean
+    account?: boolean
+    callback?: boolean
+  }>({})
 
   const loadData = useCallback(async () => {
     try {
@@ -62,18 +67,21 @@ function PopupIndex() {
   const handleCasChange = async (value: string) => {
     const newState = { ...popupState, selectedCasId: value }
     setLocalPopupState(newState)
+    setValidationErrors(prev => ({ ...prev, cas: false }))
     await setPopupState(newState)
   }
 
   const handleAccountChange = async (value: string) => {
     const newState = { ...popupState, selectedAccountId: value }
     setLocalPopupState(newState)
+    setValidationErrors(prev => ({ ...prev, account: false }))
     await setPopupState(newState)
   }
 
   const handleCallbackChange = async (value: string) => {
     const newState = { ...popupState, selectedCallbackId: value }
     setLocalPopupState(newState)
+    setValidationErrors(prev => ({ ...prev, callback: false }))
     await setPopupState(newState)
   }
 
@@ -90,9 +98,15 @@ function PopupIndex() {
   }
 
   const handleLogin = async () => {
-    if (!popupState.selectedCasId || !popupState.selectedAccountId || !popupState.selectedCallbackId) {
-      setErrorMessage(t("pleaseSelectAllOptions"))
-      setLoginStatus("error")
+    // 校验所有必填项
+    const errors = {
+      cas: !popupState.selectedCasId,
+      account: !popupState.selectedAccountId,
+      callback: !popupState.selectedCallbackId,
+    }
+    setValidationErrors(errors)
+    
+    if (errors.cas || errors.account || errors.callback) {
       return
     }
 
@@ -112,13 +126,12 @@ function PopupIndex() {
     try {
       // 构建当前回调地址相关的 token 映射关系
       const currentTokenMappings: Record<string, string> = {}
-      if (callbackConfig.tokenKeys && popupState.tokenKeyMappings) {
+      if (callbackConfig.tokenKeys && callbackConfig.tokenKeys.length > 0) {
         for (const tokenKey of callbackConfig.tokenKeys) {
           const mappingKey = `${callbackConfig.id}:${tokenKey}`
-          const casId = popupState.tokenKeyMappings[mappingKey]
-          if (casId) {
-            currentTokenMappings[tokenKey] = casId
-          }
+          // 如果没有映射，默认使用当前选中的 CAS
+          const casId = popupState.tokenKeyMappings?.[mappingKey] || casConfig.id
+          currentTokenMappings[tokenKey] = casId
         }
       }
 
@@ -239,7 +252,7 @@ function PopupIndex() {
               <span>{t("casLoginAddresses")}</span>
             </div>
             <Select value={popupState.selectedCasId || ""} onValueChange={handleCasChange}>
-              <SelectTrigger className="bg-background border-border hover:border-primary/50 transition-colors">
+              <SelectTrigger className={`bg-background border-border hover:border-primary/50 transition-colors ${validationErrors.cas ? 'border-destructive' : ''}`}>
                 <SelectValue placeholder={t("selectCasAddress")} />
               </SelectTrigger>
               <SelectContent>
@@ -250,6 +263,9 @@ function PopupIndex() {
                 ))}
               </SelectContent>
             </Select>
+            {validationErrors.cas && (
+              <p className="text-xs text-destructive pl-1">{t("pleaseSelectCas")}</p>
+            )}
             {selectedCas && (
               <p className="text-xs text-muted-foreground pl-1 truncate">{selectedCas.url}</p>
             )}
@@ -261,7 +277,7 @@ function PopupIndex() {
               <span>{t("accounts")}</span>
             </div>
             <Select value={popupState.selectedAccountId || ""} onValueChange={handleAccountChange}>
-              <SelectTrigger className="bg-background border-border hover:border-primary/50 transition-colors">
+              <SelectTrigger className={`bg-background border-border hover:border-primary/50 transition-colors ${validationErrors.account ? 'border-destructive' : ''}`}>
                 <SelectValue placeholder={t("selectAccount")} />
               </SelectTrigger>
               <SelectContent>
@@ -272,6 +288,9 @@ function PopupIndex() {
                 ))}
               </SelectContent>
             </Select>
+            {validationErrors.account && (
+              <p className="text-xs text-destructive pl-1">{t("pleaseSelectAccount")}</p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -280,7 +299,7 @@ function PopupIndex() {
               <span>{t("callbackAddresses")}</span>
             </div>
             <Select value={popupState.selectedCallbackId || ""} onValueChange={handleCallbackChange}>
-              <SelectTrigger className="bg-background border-border hover:border-primary/50 transition-colors">
+              <SelectTrigger className={`bg-background border-border hover:border-primary/50 transition-colors ${validationErrors.callback ? 'border-destructive' : ''}`}>
                 <SelectValue placeholder={t("selectCallbackAddress")} />
               </SelectTrigger>
               <SelectContent>
@@ -291,6 +310,9 @@ function PopupIndex() {
                 ))}
               </SelectContent>
             </Select>
+            {validationErrors.callback && (
+              <p className="text-xs text-destructive pl-1">{t("pleaseSelectCallback")}</p>
+            )}
             {selectedCallback && (
               <p className="text-xs text-muted-foreground pl-1 truncate">{selectedCallback.url}</p>
             )}

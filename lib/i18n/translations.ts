@@ -72,6 +72,9 @@ export interface Translations {
   loggingIn: string
   loginSuccessful: string
   pleaseSelectAllOptions: string
+  pleaseSelectCas: string
+  pleaseSelectAccount: string
+  pleaseSelectCallback: string
   invalidConfiguration: string
   usernameField: string
   passwordField: string
@@ -188,6 +191,9 @@ export const translations: Record<Language, Translations> = {
     loggingIn: "Logging in...",
     loginSuccessful: "Login successful! Tokens injected.",
     pleaseSelectAllOptions: "Please select all options",
+    pleaseSelectCas: "Please select a CAS login address",
+    pleaseSelectAccount: "Please select an account",
+    pleaseSelectCallback: "Please select a callback address",
     invalidConfiguration: "Invalid configuration",
     usernameField: "Username Field",
     passwordField: "Password Field",
@@ -302,6 +308,9 @@ export const translations: Record<Language, Translations> = {
     loggingIn: "登录中...",
     loginSuccessful: "登录成功！已注入令牌。",
     pleaseSelectAllOptions: "请选择所有选项",
+    pleaseSelectCas: "请选择 CAS 登录地址",
+    pleaseSelectAccount: "请选择账号",
+    pleaseSelectCallback: "请选择回调地址",
     invalidConfiguration: "配置无效",
     usernameField: "用户名字段",
     passwordField: "密码字段",

@@ -156,27 +156,66 @@ async function navigateAndInjectTokens(
   const tab = await chrome.tabs.get(tabId)
   const currentUrl = tab.url || ""
   
+  // 检查是否是受限页面（chrome://, edge://, about: 等）
+  const isRestrictedUrl = (url: string) => {
+    return url.startsWith('chrome://') || 
+           url.startsWith('chrome-extension://') ||
+           url.startsWith('edge://') || 
+           url.startsWith('about:') ||
+           url.startsWith('devtools://') ||
+           url === ''
+  }
+  
   // 提取 URL 的基础部分（不含 query string 和 hash）用于比较
   const getBaseUrl = (url: string) => url.split('?')[0].split('#')[0]
   const currentBaseUrl = getBaseUrl(currentUrl)
   const targetBaseUrl = getBaseUrl(trimmedUrl)
   
-  // 检查是否已经在目标页面
-  const isOnTargetPage = currentBaseUrl === targetBaseUrl || currentUrl.startsWith(targetBaseUrl)
+  // 检查是否已经在目标页面（受限页面不算在目标页面）
+  const isOnTargetPage = !isRestrictedUrl(currentUrl) && 
+    (currentBaseUrl === targetBaseUrl || currentUrl.startsWith(targetBaseUrl))
+  
+  if (isRestrictedUrl(currentUrl)) {
+    console.log("[Peaks Login] Current tab is restricted URL, will navigate to target:", currentUrl)
+  }
   
   if (isOnTargetPage) {
-    // 已经在目标页面，先注入 tokens，然后刷新页面使更改生效
-    console.log("[Peaks Login] Already on target page, injecting tokens and refreshing...")
+    // 已经在目标页面，先刷新页面，等待加载完成后再注入 tokens
+    console.log("[Peaks Login] Already on target page, refreshing first then injecting tokens...")
     console.log("[Peaks Login] Current URL:", currentUrl)
     
-    // 先注入 tokens
-    await injectTokensToPage(tabId, tokens, false)
-    
-    // 刷新页面让应用重新读取 localStorage（方便切换账号）
-    console.log("[Peaks Login] Reloading page to apply new tokens...")
+    // 先刷新页面
+    console.log("[Peaks Login] Reloading page...")
     await chrome.tabs.reload(tabId)
     
-    console.log("[Peaks Login] Page reload triggered")
+    // 等待页面加载完成
+    await new Promise<void>((resolve) => {
+      const listener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo) => {
+        if (updatedTabId === tabId && changeInfo.status === "complete") {
+          chrome.tabs.onUpdated.removeListener(listener)
+          console.log("[Peaks Login] Page reload complete")
+          resolve()
+        }
+      }
+      chrome.tabs.onUpdated.addListener(listener)
+      
+      // 超时保护
+      setTimeout(() => {
+        chrome.tabs.onUpdated.removeListener(listener)
+        console.log("[Peaks Login] Timeout waiting for page reload, proceeding anyway...")
+        resolve()
+      }, 15000)
+    })
+    
+    // 额外等待，确保页面 JS 初始化完成
+    console.log("[Peaks Login] Waiting additional 1000ms for page initialization...")
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // 注入 tokens
+    console.log("[Peaks Login] Injecting tokens to page...")
+    await injectTokensToPage(tabId, tokens, false)
+    
+    console.log("[Peaks Login] Token injection after reload completed")
   } else {
     // 需要导航到目标页面
     console.log("[Peaks Login] Current URL:", currentUrl)
@@ -206,8 +245,8 @@ async function navigateAndInjectTokens(
     })
     
     // 额外等待，确保页面 JS 初始化完成
-    console.log("[Peaks Login] Waiting additional 500ms for page initialization...")
-    await new Promise(resolve => setTimeout(resolve, 500))
+    console.log("[Peaks Login] Waiting additional 1000ms for page initialization...")
+    await new Promise(resolve => setTimeout(resolve, 1000))
     
     // 注入 tokens
     console.log("[Peaks Login] Injecting tokens to page...")
@@ -217,15 +256,25 @@ async function navigateAndInjectTokens(
   console.log("[Peaks Login] Token injection completed successfully")
 }
 
+// 安全地发送响应，避免消息通道关闭时报错
+function safeSendResponse(sendResponse: (response: unknown) => void, response: unknown): void {
+  try {
+    sendResponse(response)
+  } catch (error) {
+    // 消息通道可能已关闭（页面导航、bfcache等），忽略错误
+    console.log("[Peaks Login] sendResponse failed (channel closed):", error)
+  }
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log("[Peaks Login] Background received message:", message.type, "from sender:", sender.tab?.id)
   
   if (message.type === "LOGIN_REQUEST") {
     handleLoginRequest(message.data as LoginRequestData, sender)
-      .then((result) => sendResponse(result))
+      .then((result) => safeSendResponse(sendResponse, result))
       .catch((error) => {
         const errorMessage = error instanceof Error ? error.message : "Unknown error"
-        sendResponse({ success: false, error: errorMessage })
+        safeSendResponse(sendResponse, { success: false, error: errorMessage })
       })
     return true
   }
@@ -239,17 +288,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       injectTokensToPage(tabId, tokenData.tokens, false)
         .then(() => {
           console.log("[Peaks Login] Injection successful")
-          sendResponse({ success: true })
+          safeSendResponse(sendResponse, { success: true })
         })
         .catch((error) => {
           const errorMessage = error instanceof Error ? error.message : "Unknown error"
           console.error("[Peaks Login] Injection failed:", errorMessage)
-          sendResponse({ success: false, error: errorMessage })
+          safeSendResponse(sendResponse, { success: false, error: errorMessage })
         })
       return true
     } else {
       console.error("[Peaks Login] EXECUTE_INJECTION missing tabId or data. tabId:", tabId, "data:", message.data)
-      sendResponse({ success: false, error: "Missing tabId or data" })
+      safeSendResponse(sendResponse, { success: false, error: "Missing tabId or data" })
     }
   }
 })
@@ -329,13 +378,21 @@ async function handleLoginRequest(
       callbackUrl: data.callbackUrl,
     }
 
-    if (sender.tab?.id) {
-      await navigateAndInjectTokens(sender.tab.id, tokenData)
+    // 优先从 sender 获取 tab，否则查询当前活动 tab
+    let tabId: number | undefined = sender.tab?.id
+    
+    if (!tabId) {
+      // 从 popup 发送消息时 sender.tab 为 undefined
+      // 使用 lastFocusedWindow 而不是 currentWindow 来确保获取正确的 tab
+      const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
+      tabId = tabs[0]?.id
+      console.log("[Peaks Login] No sender.tab, queried active tab:", tabId, "URL:", tabs[0]?.url)
+    }
+    
+    if (tabId) {
+      await navigateAndInjectTokens(tabId, tokenData)
     } else {
-      const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true })
-      if (activeTab?.id) {
-        await navigateAndInjectTokens(activeTab.id, tokenData)
-      }
+      throw new Error("Cannot find active tab to inject tokens")
     }
 
     return { success: true }
