@@ -1,0 +1,1239 @@
+import { useState, useCallback, useEffect } from "react"
+import type { CasConfig, CallbackConfig, AccountConfig, AppSettings } from "~/types"
+import "~/style.css"
+import { Button } from "~/components/ui/button"
+import { Input } from "~/components/ui/input"
+import { Label } from "~/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "~/components/ui/table"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "~/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "~/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select"
+import { getAppSettings, setAppSettings, generateId, createTimestamp, getMasterKey, setMasterKey } from "~/lib/storage"
+import { encrypt, generateMasterKey, exportKey, importKey } from "~/lib/crypto"
+import { useTranslation } from "~/lib/useTranslation"
+import { useTheme } from "~/lib/useTheme"
+import { useToast } from "~/hooks/use-toast"
+import { Plus, Trash2, Server, Link, User, Globe, Pencil, AlertTriangle, Copy, Check, Shield, Moon, Sun, Download, Upload } from "lucide-react"
+import icon from "~/assets/icon.png"
+import iconDark from "~/assets/icon-dark.png"
+import { Switch } from "~/components/ui/switch"
+import { Toaster } from "~/components/ui/toaster"
+
+function OptionsIndex() {
+  const { t, language, setLanguage } = useTranslation()
+  const { theme, setTheme, resolvedTheme } = useTheme()
+  const { toast } = useToast()
+  const currentIcon = resolvedTheme === "dark" ? iconDark : icon
+  const [settings, setSettings] = useState<AppSettings>({
+    casConfigs: [],
+    callbackConfigs: [],
+    accounts: [],
+  })
+  const [loading, setLoading] = useState(true)
+  const [masterKeyString, setMasterKeyString] = useState<string>("")
+  
+  const [newCas, setNewCas] = useState({ name: "", url: "", usernameField: "email", passwordField: "password", tokenResponseKey: "token" })
+  const [newCallback, setNewCallback] = useState({ name: "", url: "", tokenKeys: ["accessToken"], enableCors: false })
+  const [newAccount, setNewAccount] = useState({ name: "", username: "", password: "" })
+  
+  const [editingCas, setEditingCas] = useState<CasConfig | null>(null)
+  const [editingCallback, setEditingCallback] = useState<CallbackConfig | null>(null)
+  const [editingAccount, setEditingAccount] = useState<AccountConfig | null>(null)
+  
+  const [editCasData, setEditCasData] = useState({ name: "", url: "", usernameField: "email", passwordField: "password", tokenResponseKey: "token" })
+  const [editCallbackData, setEditCallbackData] = useState({ name: "", url: "", tokenKeys: ["accessToken"], enableCors: false })
+  const [editAccountData, setEditAccountData] = useState({ name: "", username: "" })
+  
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  const loadSettings = useCallback(async () => {
+    const loaded = await getAppSettings()
+    setSettings(loaded)
+    const key = await getMasterKey()
+    if (key) {
+      setMasterKeyString(key)
+    }
+    setLoading(false)
+  }, [])
+
+  useEffect(() => {
+    loadSettings()
+  }, [loadSettings])
+
+  const initMasterKey = async () => {
+    const key = await generateMasterKey()
+    const keyString = await exportKey(key)
+    await setMasterKey(keyString)
+    setMasterKeyString(keyString)
+    toast({
+      title: t("success"),
+      description: t("keyInitializedSuccess"),
+    })
+  }
+
+  const addCasConfig = async () => {
+    if (!newCas.name || !newCas.url) return
+    const config: CasConfig = {
+      id: generateId(),
+      name: newCas.name,
+      url: newCas.url,
+      usernameField: newCas.usernameField || "email",
+      passwordField: newCas.passwordField || "password",
+      tokenResponseKey: newCas.tokenResponseKey || "token",
+      createdAt: createTimestamp(),
+      updatedAt: createTimestamp(),
+    }
+    const updated = { ...settings, casConfigs: [...settings.casConfigs, config] }
+    await setAppSettings(updated)
+    setSettings(updated)
+    setNewCas({ name: "", url: "", usernameField: "email", passwordField: "password", tokenResponseKey: "token" })
+    toast({
+      title: t("success"),
+      description: t("casAddedSuccess"),
+    })
+  }
+
+  const addCallbackConfig = async () => {
+    if (!newCallback.name || !newCallback.url) return
+    const config: CallbackConfig = {
+      id: generateId(),
+      name: newCallback.name,
+      url: newCallback.url,
+      tokenKeys: newCallback.tokenKeys.filter(k => k.trim() !== ""),
+      enableCors: newCallback.enableCors,
+      createdAt: createTimestamp(),
+      updatedAt: createTimestamp(),
+    }
+    const updated = { ...settings, callbackConfigs: [...settings.callbackConfigs, config] }
+    await setAppSettings(updated)
+    setSettings(updated)
+    setNewCallback({ name: "", url: "", tokenKeys: ["accessToken"], enableCors: false })
+    toast({
+      title: t("success"),
+      description: t("callbackAddedSuccess"),
+    })
+  }
+
+  const addAccount = async () => {
+    if (!newAccount.name || !newAccount.username || !newAccount.password) return
+    
+    let keyToUse = masterKeyString
+    if (!keyToUse) {
+      const key = await generateMasterKey()
+      keyToUse = await exportKey(key)
+      await setMasterKey(keyToUse)
+      setMasterKeyString(keyToUse)
+    }
+    
+    const key = await importKey(keyToUse)
+    const encrypted = await encrypt(newAccount.password, key)
+    const config: AccountConfig = {
+      id: generateId(),
+      name: newAccount.name,
+      username: newAccount.username,
+      encryptedPassword: JSON.stringify(encrypted),
+      createdAt: createTimestamp(),
+      updatedAt: createTimestamp(),
+    }
+    const updated = { ...settings, accounts: [...settings.accounts, config] }
+    await setAppSettings(updated)
+    setSettings(updated)
+    setNewAccount({ name: "", username: "", password: "" })
+    toast({
+      title: t("success"),
+      description: t("accountAddedSuccess"),
+    })
+  }
+
+  const deleteItem = async (type: "cas" | "callback" | "account", id: string) => {
+    let updated: AppSettings
+    
+    if (type === "cas") {
+      updated = { ...settings, casConfigs: settings.casConfigs.filter((c) => c.id !== id) }
+      await setAppSettings(updated)
+      setSettings(updated)
+      toast({
+        title: t("success"),
+        description: t("casDeletedSuccess"),
+      })
+    } else if (type === "callback") {
+      updated = { ...settings, callbackConfigs: settings.callbackConfigs.filter((c) => c.id !== id) }
+      await setAppSettings(updated)
+      setSettings(updated)
+      toast({
+        title: t("success"),
+        description: t("callbackDeletedSuccess"),
+      })
+    } else {
+      updated = { ...settings, accounts: settings.accounts.filter((a) => a.id !== id) }
+      await setAppSettings(updated)
+      setSettings(updated)
+      toast({
+        title: t("success"),
+        description: t("accountDeletedSuccess"),
+      })
+    }
+  }
+
+  const exportCasConfig = () => {
+    const config = {
+      casConfigs: settings.casConfigs,
+      exportedAt: new Date().toISOString(),
+    }
+    
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `peaks-login-cas-config-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const importCasConfig = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      const config = JSON.parse(text)
+      
+      if (!config.casConfigs || !Array.isArray(config.casConfigs)) {
+        throw new Error("Invalid CAS configuration file")
+      }
+
+      const importedCasConfigs = config.casConfigs.map((cas: CasConfig) => ({
+        ...cas,
+        id: cas.id || generateId(),
+        createdAt: cas.createdAt || createTimestamp(),
+        updatedAt: createTimestamp(),
+      }))
+
+      const mergedCasConfigs = [...settings.casConfigs]
+      
+      importedCasConfigs.forEach((importedCas: CasConfig) => {
+        const existingIndex = mergedCasConfigs.findIndex(cas => cas.id === importedCas.id)
+        if (existingIndex >= 0) {
+          mergedCasConfigs[existingIndex] = importedCas
+        } else {
+          mergedCasConfigs.push(importedCas)
+        }
+      })
+
+      const updated = {
+        ...settings,
+        casConfigs: mergedCasConfigs,
+      }
+
+      await setAppSettings(updated)
+      setSettings(updated)
+      toast({
+        title: t("success"),
+        description: t("importSuccess"),
+      })
+    } catch (error) {
+      console.error("Import CAS error:", error)
+      toast({
+        title: t("error"),
+        description: t("importError"),
+        variant: "destructive",
+      })
+    }
+
+    event.target.value = ""
+  }
+
+  const exportCallbackConfig = () => {
+    const config = {
+      callbackConfigs: settings.callbackConfigs,
+      exportedAt: new Date().toISOString(),
+    }
+    
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `peaks-login-callback-config-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  const importCallbackConfig = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    try {
+      const text = await file.text()
+      const config = JSON.parse(text)
+      
+      if (!config.callbackConfigs || !Array.isArray(config.callbackConfigs)) {
+        throw new Error("Invalid callback configuration file")
+      }
+
+      const importedCallbackConfigs = config.callbackConfigs.map((callback: CallbackConfig) => ({
+        ...callback,
+        id: callback.id || generateId(),
+        createdAt: callback.createdAt || createTimestamp(),
+        updatedAt: createTimestamp(),
+      }))
+
+      const mergedCallbackConfigs = [...settings.callbackConfigs]
+      
+      importedCallbackConfigs.forEach((importedCallback: CallbackConfig) => {
+        const existingIndex = mergedCallbackConfigs.findIndex(callback => callback.id === importedCallback.id)
+        if (existingIndex >= 0) {
+          mergedCallbackConfigs[existingIndex] = importedCallback
+        } else {
+          mergedCallbackConfigs.push(importedCallback)
+        }
+      })
+
+      const updated = {
+        ...settings,
+        callbackConfigs: mergedCallbackConfigs,
+      }
+
+      await setAppSettings(updated)
+      setSettings(updated)
+      toast({
+        title: t("success"),
+        description: t("importSuccess"),
+      })
+    } catch (error) {
+      console.error("Import callback error:", error)
+      toast({
+        title: t("error"),
+        description: t("importError"),
+        variant: "destructive",
+      })
+    }
+
+    event.target.value = ""
+  }
+
+  const openEditCas = (cas: CasConfig) => {
+    setEditingCas(cas)
+    setEditCasData({ 
+      name: cas.name, 
+      url: cas.url, 
+      usernameField: cas.usernameField || "email", 
+      passwordField: cas.passwordField || "password",
+      tokenResponseKey: cas.tokenResponseKey || "token"
+    })
+  }
+
+  const saveEditCas = async () => {
+    if (!editingCas || !editCasData.name || !editCasData.url) return
+    const updated = {
+      ...settings,
+      casConfigs: settings.casConfigs.map((c) =>
+        c.id === editingCas.id
+          ? { 
+              ...c, 
+              name: editCasData.name, 
+              url: editCasData.url, 
+              usernameField: editCasData.usernameField || "email", 
+              passwordField: editCasData.passwordField || "password",
+              tokenResponseKey: editCasData.tokenResponseKey || "token",
+              updatedAt: createTimestamp() 
+            }
+          : c
+      ),
+    }
+    await setAppSettings(updated)
+    setSettings(updated)
+    setEditingCas(null)
+    setEditCasData({ name: "", url: "", usernameField: "email", passwordField: "password", tokenResponseKey: "token" })
+    toast({
+      title: t("success"),
+      description: t("casUpdatedSuccess"),
+    })
+  }
+
+  const openEditCallback = (callback: CallbackConfig) => {
+    setEditingCallback(callback)
+    setEditCallbackData({ name: callback.name, url: callback.url, tokenKeys: callback.tokenKeys || ["accessToken"], enableCors: callback.enableCors || false })
+  }
+
+  const saveEditCallback = async () => {
+    if (!editingCallback || !editCallbackData.name || !editCallbackData.url) return
+    const updated = {
+      ...settings,
+      callbackConfigs: settings.callbackConfigs.map((c) =>
+        c.id === editingCallback.id
+          ? { ...c, name: editCallbackData.name, url: editCallbackData.url, tokenKeys: editCallbackData.tokenKeys.filter(k => k.trim() !== ""), enableCors: editCallbackData.enableCors, updatedAt: createTimestamp() }
+          : c
+      ),
+    }
+    await setAppSettings(updated)
+    setSettings(updated)
+    setEditingCallback(null)
+    setEditCallbackData({ name: "", url: "", tokenKeys: ["accessToken"], enableCors: false })
+    toast({
+      title: t("success"),
+      description: t("callbackUpdatedSuccess"),
+    })
+  }
+
+  const openEditAccount = (account: AccountConfig) => {
+    setEditingAccount(account)
+    setEditAccountData({ name: account.name, username: account.username })
+  }
+
+  const saveEditAccount = async () => {
+    if (!editingAccount || !editAccountData.name || !editAccountData.username) return
+    const updated = {
+      ...settings,
+      accounts: settings.accounts.map((a) =>
+        a.id === editingAccount.id
+          ? { ...a, name: editAccountData.name, username: editAccountData.username, updatedAt: createTimestamp() }
+          : a
+      ),
+    }
+    await setAppSettings(updated)
+    setSettings(updated)
+    setEditingAccount(null)
+    setEditAccountData({ name: "", username: "" })
+  }
+
+  const copyToClipboard = async (text: string, id: string) => {
+    await navigator.clipboard.writeText(text)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
+    toast({
+      title: t("success"),
+      description: t("configCopiedSuccess"),
+    })
+  }
+
+  const copyCasConfig = async (cas: CasConfig) => {
+    const newConfig: CasConfig = {
+      id: generateId(),
+      name: `${cas.name} (${t("copy")})`,
+      url: cas.url,
+      usernameField: cas.usernameField || "email",
+      passwordField: cas.passwordField || "password",
+      tokenResponseKey: cas.tokenResponseKey || "token",
+      createdAt: createTimestamp(),
+      updatedAt: createTimestamp(),
+    }
+    const updated = { ...settings, casConfigs: [...settings.casConfigs, newConfig] }
+    await setAppSettings(updated)
+    setSettings(updated)
+    await copyToClipboard(cas.url, newConfig.id)
+  }
+
+  const copyCallbackConfig = async (callback: CallbackConfig) => {
+    const newConfig: CallbackConfig = {
+      id: generateId(),
+      name: `${callback.name} (${t("copy")})`,
+      url: callback.url,
+      tokenKeys: callback.tokenKeys || ["accessToken"],
+      enableCors: callback.enableCors || false,
+      createdAt: createTimestamp(),
+      updatedAt: createTimestamp(),
+    }
+    const updated = { ...settings, callbackConfigs: [...settings.callbackConfigs, newConfig] }
+    await setAppSettings(updated)
+    setSettings(updated)
+    await copyToClipboard(callback.url, newConfig.id)
+  }
+
+  const copyAccountConfig = async (account: AccountConfig) => {
+    const newConfig: AccountConfig = {
+      id: generateId(),
+      name: `${account.name} (${t("copy")})`,
+      username: account.username,
+      encryptedPassword: account.encryptedPassword,
+      createdAt: createTimestamp(),
+      updatedAt: createTimestamp(),
+    }
+    const updated = { ...settings, accounts: [...settings.accounts, newConfig] }
+    await setAppSettings(updated)
+    setSettings(updated)
+    await copyToClipboard(account.username, newConfig.id)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-muted-foreground">{t("loading")}</div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-background p-6">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="flex items-center justify-between pb-4 border-b">
+          <div className="flex items-center gap-3">
+            <img src={currentIcon} alt="Peaks Token" className="h-8 w-8" />
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">{t("settingsTitle")}</h1>
+              <p className="text-sm text-muted-foreground">{t("settingsDescription")}</p>
+            </div>
+          </div>
+        </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Globe className="h-5 w-5 text-primary" />
+              <CardTitle>{t("language")}</CardTitle>
+            </div>
+            <CardDescription>{t("languageDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select value={language} onValueChange={(value: "en" | "zh") => setLanguage(value)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="en">English</SelectItem>
+                <SelectItem value="zh">中文</SelectItem>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              {resolvedTheme === "dark" ? (
+                <Moon className="h-5 w-5 text-primary" />
+              ) : (
+                <Sun className="h-5 w-5 text-primary" />
+              )}
+              <CardTitle>{t("theme")}</CardTitle>
+            </div>
+            <CardDescription>{t("themeDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select value={theme} onValueChange={(value: "light" | "dark" | "system") => setTheme(value)}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">
+                  <div className="flex items-center gap-2">
+                    <Sun className="h-4 w-4" />
+                    {t("lightTheme")}
+                  </div>
+                </SelectItem>
+                <SelectItem value="dark">
+                  <div className="flex items-center gap-2">
+                    <Moon className="h-4 w-4" />
+                    {t("darkTheme")}
+                  </div>
+                </SelectItem>
+                <SelectItem value="system">
+                  <div className="flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    {t("systemTheme")}
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+
+        {!masterKeyString && (
+          <Card className="border-primary/50 bg-primary/5">
+            <CardHeader>
+              <CardTitle className="text-primary">{t("initEncryptionKey")}</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                {t("initEncryptionKeyDescription")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={initMasterKey}>
+                {t("initializeKey")}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Server className="h-5 w-5 text-primary" />
+              <CardTitle>{t("casLoginAddresses")}</CardTitle>
+            </div>
+            <CardDescription>{t("casLoginDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="cas-name">{t("casName")}</Label>
+                <Input
+                  id="cas-name"
+                  placeholder={t("casNamePlaceholder")}
+                  value={newCas.name}
+                  onChange={(e) => setNewCas({ ...newCas, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cas-url">{t("casUrl")}</Label>
+                <Input
+                  id="cas-url"
+                  placeholder={t("casUrlPlaceholder")}
+                  value={newCas.url}
+                  onChange={(e) => setNewCas({ ...newCas, url: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cas-username-field">{t("usernameField")}</Label>
+                <Input
+                  id="cas-username-field"
+                  placeholder="email"
+                  value={newCas.usernameField}
+                  onChange={(e) => setNewCas({ ...newCas, usernameField: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cas-password-field">{t("passwordField")}</Label>
+                <Input
+                  id="cas-password-field"
+                  placeholder="password"
+                  value={newCas.passwordField}
+                  onChange={(e) => setNewCas({ ...newCas, passwordField: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cas-token-response-key">{t("tokenResponseKey")}</Label>
+                <Input
+                  id="cas-token-response-key"
+                  placeholder={t("tokenResponseKeyPlaceholder")}
+                  value={newCas.tokenResponseKey}
+                  onChange={(e) => setNewCas({ ...newCas, tokenResponseKey: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button onClick={addCasConfig} disabled={!newCas.name || !newCas.url}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t("addCasAddress")}
+              </Button>
+              <Button onClick={exportCasConfig} variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                {t("exportConfig")}
+              </Button>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={importCasConfig}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  id="import-cas-file"
+                />
+                <Button variant="outline" size="sm" className="cursor-pointer">
+                  <Upload className="h-4 w-4 mr-2" />
+                  {t("importConfig")}
+                </Button>
+              </div>
+            </div>
+
+            {settings.casConfigs.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("casName")}</TableHead>
+                    <TableHead>{t("casUrl")}</TableHead>
+                    <TableHead className="w-[150px]">{t("actions")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {settings.casConfigs.map((cas) => (
+                    <TableRow key={cas.id}>
+                      <TableCell className="font-medium">{cas.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{cas.url}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEditCas(cas)}
+                            className="text-primary hover:text-primary"
+                            title={t("edit")}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyCasConfig(cas)}
+                            className="text-primary hover:text-primary"
+                            title={t("copy")}
+                          >
+                            {copiedId === cas.id ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t("deleteCasTitle")}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t("deleteCasDescription")} "{cas.name}"
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteItem("cas", cas.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  {t("delete")}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Link className="h-5 w-5 text-primary" />
+              <CardTitle>{t("callbackAddresses")}</CardTitle>
+            </div>
+            <CardDescription>{t("callbackDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="callback-name">{t("callbackName")}</Label>
+                <Input
+                  id="callback-name"
+                  placeholder={t("callbackNamePlaceholder")}
+                  value={newCallback.name}
+                  onChange={(e) => setNewCallback({ ...newCallback, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="callback-url">{t("callbackUrl")}</Label>
+                <Input
+                  id="callback-url"
+                  placeholder={t("callbackUrlPlaceholder")}
+                  value={newCallback.url}
+                  onChange={(e) => setNewCallback({ ...newCallback, url: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("tokenKeys")}</Label>
+              <div className="space-y-2">
+                {newCallback.tokenKeys.map((tokenKey, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      placeholder={t("tokenKeyPlaceholder")}
+                      value={tokenKey}
+                      onChange={(e) => {
+                        const newTokenKeys = [...newCallback.tokenKeys]
+                        newTokenKeys[index] = e.target.value
+                        setNewCallback({ ...newCallback, tokenKeys: newTokenKeys })
+                      }}
+                    />
+                    {newCallback.tokenKeys.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const newTokenKeys = newCallback.tokenKeys.filter((_, i) => i !== index)
+                          setNewCallback({ ...newCallback, tokenKeys: newTokenKeys })
+                        }}
+                        className="text-destructive hover:text-destructive shrink-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNewCallback({ ...newCallback, tokenKeys: [...newCallback.tokenKeys, ""] })}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  {t("addTokenKey")}
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <Label className="text-sm font-medium">{t("enableCors")}</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">{t("enableCorsDescription")}</p>
+              </div>
+              <Switch
+                checked={newCallback.enableCors}
+                onCheckedChange={(checked) => setNewCallback({ ...newCallback, enableCors: checked })}
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <Button onClick={addCallbackConfig} disabled={!newCallback.name || !newCallback.url}>
+                <Plus className="h-4 w-4 mr-2" />
+                {t("addCallbackAddress")}
+              </Button>
+              <Button onClick={exportCallbackConfig} variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                {t("exportConfig")}
+              </Button>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={importCallbackConfig}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  id="import-callback-file"
+                />
+                <Button variant="outline" size="sm" className="cursor-pointer">
+                  <Upload className="h-4 w-4 mr-2" />
+                  {t("importConfig")}
+                </Button>
+              </div>
+            </div>
+
+            {settings.callbackConfigs.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("callbackName")}</TableHead>
+                    <TableHead>{t("callbackUrl")}</TableHead>
+                    <TableHead className="w-[150px]">{t("actions")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {settings.callbackConfigs.map((callback) => (
+                    <TableRow key={callback.id}>
+                      <TableCell className="font-medium">{callback.name}</TableCell>
+                      <TableCell className="text-muted-foreground">{callback.url}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEditCallback(callback)}
+                            className="text-primary hover:text-primary"
+                            title={t("edit")}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyCallbackConfig(callback)}
+                            className="text-primary hover:text-primary"
+                            title={t("copy")}
+                          >
+                            {copiedId === callback.id ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t("deleteCallbackTitle")}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t("deleteCallbackDescription")} "{callback.name}"
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteItem("callback", callback.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  {t("delete")}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <User className="h-5 w-5 text-primary" />
+              <CardTitle>{t("accounts")}</CardTitle>
+            </div>
+            <CardDescription>{t("accountsDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="account-name">{t("accountName")}</Label>
+                <Input
+                  id="account-name"
+                  placeholder={t("accountNamePlaceholder")}
+                  value={newAccount.name}
+                  onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="account-username">{t("accountUsername")}</Label>
+                <Input
+                  id="account-username"
+                  placeholder={t("accountUsernamePlaceholder")}
+                  value={newAccount.username}
+                  onChange={(e) => setNewAccount({ ...newAccount, username: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="account-password">{t("accountPassword")}</Label>
+                <Input
+                  id="account-password"
+                  type="password"
+                  placeholder={t("accountPasswordPlaceholder")}
+                  value={newAccount.password}
+                  onChange={(e) => setNewAccount({ ...newAccount, password: e.target.value })}
+                />
+              </div>
+            </div>
+            <Button
+              onClick={addAccount}
+              disabled={!newAccount.name || !newAccount.username || !newAccount.password}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              {t("addAccount")}
+            </Button>
+
+            {settings.accounts.length > 0 && (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("accountName")}</TableHead>
+                    <TableHead>{t("accountUsername")}</TableHead>
+                    <TableHead>{t("accountPassword")}</TableHead>
+                    <TableHead className="w-[150px]">{t("actions")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {settings.accounts.map((account) => (
+                    <TableRow key={account.id}>
+                      <TableCell className="font-medium">{account.name}</TableCell>
+                      <TableCell>{account.username}</TableCell>
+                      <TableCell className="text-muted-foreground">{t("passwordEncrypted")}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEditAccount(account)}
+                            className="text-primary hover:text-primary"
+                            title={t("edit")}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => copyAccountConfig(account)}
+                            className="text-primary hover:text-primary"
+                            title={t("copy")}
+                          >
+                            {copiedId === account.id ? (
+                              <Check className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>{t("deleteAccountTitle")}</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t("deleteAccountDescription")} "{account.name}"
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deleteItem("account", account.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  {t("delete")}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Edit CAS Dialog */}
+      <Dialog open={!!editingCas} onOpenChange={(open) => !open && setEditingCas(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("editCasTitle")}</DialogTitle>
+            <DialogDescription>{t("editCasDescription")}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-cas-name">{t("casName")}</Label>
+              <Input
+                id="edit-cas-name"
+                value={editCasData.name}
+                onChange={(e) => setEditCasData({ ...editCasData, name: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-cas-url">{t("casUrl")}</Label>
+              <Input
+                id="edit-cas-url"
+                value={editCasData.url}
+                onChange={(e) => setEditCasData({ ...editCasData, url: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-cas-username-field">{t("usernameField")}</Label>
+              <Input
+                id="edit-cas-username-field"
+                value={editCasData.usernameField}
+                onChange={(e) => setEditCasData({ ...editCasData, usernameField: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-cas-password-field">{t("passwordField")}</Label>
+              <Input
+                id="edit-cas-password-field"
+                value={editCasData.passwordField}
+                onChange={(e) => setEditCasData({ ...editCasData, passwordField: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-cas-token-response-key">{t("tokenResponseKey")}</Label>
+              <Input
+                id="edit-cas-token-response-key"
+                value={editCasData.tokenResponseKey}
+                onChange={(e) => setEditCasData({ ...editCasData, tokenResponseKey: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCas(null)}>
+              {t("cancel")}
+            </Button>
+            <Button onClick={saveEditCas} disabled={!editCasData.name || !editCasData.url}>
+              {t("save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Callback Dialog */}
+      <Dialog open={!!editingCallback} onOpenChange={(open) => !open && setEditingCallback(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("editCallbackTitle")}</DialogTitle>
+            <DialogDescription>{t("editCallbackDescription")}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-callback-name">{t("callbackName")}</Label>
+              <Input
+                id="edit-callback-name"
+                value={editCallbackData.name}
+                onChange={(e) => setEditCallbackData({ ...editCallbackData, name: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-callback-url">{t("callbackUrl")}</Label>
+              <Input
+                id="edit-callback-url"
+                value={editCallbackData.url}
+                onChange={(e) => setEditCallbackData({ ...editCallbackData, url: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>{t("tokenKeys")}</Label>
+              <div className="space-y-2">
+                {editCallbackData.tokenKeys.map((tokenKey, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      placeholder={t("tokenKeyPlaceholder")}
+                      value={tokenKey}
+                      onChange={(e) => {
+                        const newTokenKeys = [...editCallbackData.tokenKeys]
+                        newTokenKeys[index] = e.target.value
+                        setEditCallbackData({ ...editCallbackData, tokenKeys: newTokenKeys })
+                      }}
+                    />
+                    {editCallbackData.tokenKeys.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                          const newTokenKeys = editCallbackData.tokenKeys.filter((_, i) => i !== index)
+                          setEditCallbackData({ ...editCallbackData, tokenKeys: newTokenKeys })
+                        }}
+                        className="text-destructive hover:text-destructive shrink-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditCallbackData({ ...editCallbackData, tokenKeys: [...editCallbackData.tokenKeys, ""] })}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  {t("addTokenKey")}
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-primary" />
+                  <Label className="text-sm font-medium">{t("enableCors")}</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">{t("enableCorsDescription")}</p>
+              </div>
+              <Switch
+                checked={editCallbackData.enableCors}
+                onCheckedChange={(checked) => setEditCallbackData({ ...editCallbackData, enableCors: checked })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingCallback(null)}>
+              {t("cancel")}
+            </Button>
+            <Button onClick={saveEditCallback} disabled={!editCallbackData.name || !editCallbackData.url}>
+              {t("save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Account Dialog */}
+      <Dialog open={!!editingAccount} onOpenChange={(open) => !open && setEditingAccount(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("editAccountTitle")}</DialogTitle>
+            <DialogDescription>{t("editAccountDescription")}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-account-name">{t("accountName")}</Label>
+              <Input
+                id="edit-account-name"
+                value={editAccountData.name}
+                onChange={(e) => setEditAccountData({ ...editAccountData, name: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-account-username">{t("accountUsername")}</Label>
+              <Input
+                id="edit-account-username"
+                value={editAccountData.username}
+                onChange={(e) => setEditAccountData({ ...editAccountData, username: e.target.value })}
+              />
+            </div>
+            <div className="rounded-md bg-muted border border-border p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">{t("passwordCannotEdit")}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{t("passwordCannotEditDescription")}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingAccount(null)}>
+              {t("cancel")}
+            </Button>
+            <Button onClick={saveEditAccount} disabled={!editAccountData.name || !editAccountData.username}>
+              {t("save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Toaster />
+    </div>
+  )
+}
+
+export default OptionsIndex
