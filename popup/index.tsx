@@ -3,13 +3,7 @@ import type { AppSettings, PopupState } from "~/types"
 import "~/style.css"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent } from "~/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "~/components/ui/select"
+import { NativeSelect, NativeSelectOption } from "~/components/ui/native-select"
 import { getAppSettings, setPopupState, getPopupState } from "~/lib/storage"
 import { useTranslation } from "~/lib/useTranslation"
 import { useTheme } from "~/lib/useTheme"
@@ -251,18 +245,18 @@ function PopupIndex() {
               <Server className="h-4 w-4 text-primary" />
               <span>{t("casLoginAddresses")}</span>
             </div>
-            <Select value={popupState.selectedCasId || ""} onValueChange={handleCasChange}>
-              <SelectTrigger className={`bg-background border-border hover:border-primary/50 transition-colors ${validationErrors.cas ? 'border-destructive' : ''}`}>
-                <SelectValue placeholder={t("selectCasAddress")} />
-              </SelectTrigger>
-              <SelectContent disablePortal>
-                {settings.casConfigs.map((cas) => (
-                  <SelectItem key={cas.id} value={cas.id}>
-                    {cas.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <NativeSelect 
+              value={popupState.selectedCasId || ""} 
+              onChange={(e) => handleCasChange(e.target.value)}
+              placeholder={t("selectCasAddress")}
+              className={`${validationErrors.cas ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
+            >
+              {settings.casConfigs.map((cas) => (
+                <NativeSelectOption key={cas.id} value={cas.id}>
+                  {cas.name}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
             {validationErrors.cas && (
               <p className="text-xs text-destructive pl-1">{t("pleaseSelectCas")}</p>
             )}
@@ -276,18 +270,18 @@ function PopupIndex() {
               <User className="h-4 w-4 text-primary" />
               <span>{t("accounts")}</span>
             </div>
-            <Select value={popupState.selectedAccountId || ""} onValueChange={handleAccountChange}>
-              <SelectTrigger className={`bg-background border-border hover:border-primary/50 transition-colors ${validationErrors.account ? 'border-destructive' : ''}`}>
-                <SelectValue placeholder={t("selectAccount")} />
-              </SelectTrigger>
-              <SelectContent disablePortal>
-                {settings.accounts.map((account) => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.name} ({account.username})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <NativeSelect 
+              value={popupState.selectedAccountId || ""} 
+              onChange={(e) => handleAccountChange(e.target.value)}
+              placeholder={t("selectAccount")}
+              className={`${validationErrors.account ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
+            >
+              {settings.accounts.map((account) => (
+                <NativeSelectOption key={account.id} value={account.id}>
+                  {account.name} ({account.username})
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
             {validationErrors.account && (
               <p className="text-xs text-destructive pl-1">{t("pleaseSelectAccount")}</p>
             )}
@@ -298,18 +292,18 @@ function PopupIndex() {
               <Link2 className="h-4 w-4 text-primary" />
               <span>{t("callbackAddresses")}</span>
             </div>
-            <Select value={popupState.selectedCallbackId || ""} onValueChange={handleCallbackChange}>
-              <SelectTrigger className={`bg-background border-border hover:border-primary/50 transition-colors ${validationErrors.callback ? 'border-destructive' : ''}`}>
-                <SelectValue placeholder={t("selectCallbackAddress")} />
-              </SelectTrigger>
-              <SelectContent disablePortal>
-                {settings.callbackConfigs.map((callback) => (
-                  <SelectItem key={callback.id} value={callback.id}>
-                    {callback.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <NativeSelect 
+              value={popupState.selectedCallbackId || ""} 
+              onChange={(e) => handleCallbackChange(e.target.value)}
+              placeholder={t("selectCallbackAddress")}
+              className={`${validationErrors.callback ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
+            >
+              {settings.callbackConfigs.map((callback) => (
+                <NativeSelectOption key={callback.id} value={callback.id}>
+                  {callback.name}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
             {validationErrors.callback && (
               <p className="text-xs text-destructive pl-1">{t("pleaseSelectCallback")}</p>
             )}
@@ -328,21 +322,18 @@ function PopupIndex() {
                 {selectedCallback.tokenKeys.map((tokenKey) => (
                   <div key={tokenKey} className="space-y-1">
                     <p className="text-xs text-muted-foreground">{tokenKey}</p>
-                    <Select 
+                    <NativeSelect 
                       value={popupState.tokenKeyMappings?.[`${selectedCallback.id}:${tokenKey}`] || ""} 
-                      onValueChange={(value) => handleTokenKeyMappingChange(selectedCallback.id, tokenKey, value)}
+                      onChange={(e) => handleTokenKeyMappingChange(selectedCallback.id, tokenKey, e.target.value)}
+                      placeholder={t("selectTokenSource")}
+                      className="border-border hover:border-primary/50 transition-colors h-9"
                     >
-                      <SelectTrigger className="bg-background border-border hover:border-primary/50 transition-colors h-9">
-                        <SelectValue placeholder={t("selectTokenSource")} />
-                      </SelectTrigger>
-                      <SelectContent disablePortal>
-                        {settings.casConfigs.map((cas) => (
-                          <SelectItem key={cas.id} value={cas.id}>
-                            {cas.name} ({cas.tokenResponseKey || "token"})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      {settings.casConfigs.map((cas) => (
+                        <NativeSelectOption key={cas.id} value={cas.id}>
+                          {cas.name} ({cas.tokenResponseKey || "token"})
+                        </NativeSelectOption>
+                      ))}
+                    </NativeSelect>
                   </div>
                 ))}
               </div>
