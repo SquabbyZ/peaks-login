@@ -101,6 +101,7 @@ function OptionsIndex() {
     toast({
       title: t("success"),
       description: t("keyInitializedSuccess"),
+      variant: "success",
     })
   }
 
@@ -123,6 +124,7 @@ function OptionsIndex() {
     toast({
       title: t("success"),
       description: t("casAddedSuccess"),
+      variant: "success",
     })
   }
 
@@ -144,6 +146,7 @@ function OptionsIndex() {
     toast({
       title: t("success"),
       description: t("callbackAddedSuccess"),
+      variant: "success",
     })
   }
 
@@ -175,6 +178,7 @@ function OptionsIndex() {
     toast({
       title: t("success"),
       description: t("accountAddedSuccess"),
+      variant: "success",
     })
   }
 
@@ -188,6 +192,7 @@ function OptionsIndex() {
       toast({
         title: t("success"),
         description: t("casDeletedSuccess"),
+        variant: "success",
       })
     } else if (type === "callback") {
       updated = { ...settings, callbackConfigs: settings.callbackConfigs.filter((c) => c.id !== id) }
@@ -196,6 +201,7 @@ function OptionsIndex() {
       toast({
         title: t("success"),
         description: t("callbackDeletedSuccess"),
+        variant: "success",
       })
     } else {
       updated = { ...settings, accounts: settings.accounts.filter((a) => a.id !== id) }
@@ -204,6 +210,7 @@ function OptionsIndex() {
       toast({
         title: t("success"),
         description: t("accountDeletedSuccess"),
+        variant: "success",
       })
     }
   }
@@ -265,6 +272,7 @@ function OptionsIndex() {
       toast({
         title: t("success"),
         description: t("importSuccess"),
+        variant: "success",
       })
     } catch (error) {
       console.error("Import CAS error:", error)
@@ -335,6 +343,7 @@ function OptionsIndex() {
       toast({
         title: t("success"),
         description: t("importSuccess"),
+        variant: "success",
       })
     } catch (error) {
       console.error("Import callback error:", error)
@@ -384,6 +393,7 @@ function OptionsIndex() {
     toast({
       title: t("success"),
       description: t("casUpdatedSuccess"),
+      variant: "success",
     })
   }
 
@@ -409,6 +419,7 @@ function OptionsIndex() {
     toast({
       title: t("success"),
       description: t("callbackUpdatedSuccess"),
+      variant: "success",
     })
   }
 
@@ -440,6 +451,7 @@ function OptionsIndex() {
     toast({
       title: t("success"),
       description: t("configCopiedSuccess"),
+      variant: "success",
     })
   }
 
