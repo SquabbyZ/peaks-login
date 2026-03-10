@@ -45,7 +45,6 @@ async function performCasLogin(
   }
   
   console.log("Login request URL:", casUrl)
-  console.log("Login request body:", JSON.stringify(requestBody, null, 2))
   
   const response = await fetch(casUrl, {
     method: "POST",

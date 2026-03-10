@@ -47,6 +47,7 @@ export interface Translations {
   deleteCallbackDescription: string
   accounts: string
   accountsDescription: string
+  callbacks: string
   accountName: string
   accountUsername: string
   accountPassword: string
@@ -116,6 +117,8 @@ export interface Translations {
   accountDeletedSuccess: string
   keyInitializedSuccess: string
   configCopiedSuccess: string
+  yes: string
+  no: string
 }
 
 export const translations: Record<Language, Translations> = {
@@ -140,7 +143,8 @@ export const translations: Record<Language, Translations> = {
     language: "Language",
     languageDescription: "Select display language",
     initEncryptionKey: "Initialize Encryption Key",
-    initEncryptionKeyDescription: "Please initialize the encryption key before adding accounts",
+    initEncryptionKeyDescription:
+      "Please initialize the encryption key before adding accounts",
     initializeKey: "Initialize Key",
     casLoginAddresses: "CAS Login Addresses",
     casLoginDescription: "Configure multiple CAS login server addresses",
@@ -166,6 +170,7 @@ export const translations: Record<Language, Translations> = {
     deleteCallbackDescription: "This will permanently delete",
     accounts: "Accounts",
     accountsDescription: "Configure login accounts (passwords are encrypted)",
+    callbacks: "Callbacks",
     accountName: "Name",
     accountUsername: "Username",
     accountPassword: "Password",
@@ -179,10 +184,12 @@ export const translations: Record<Language, Translations> = {
     deleteAccountDescription: "This will permanently delete",
     passwordEncrypted: "•••••••• (encrypted)",
     passwordCannotEdit: "Password cannot be modified",
-    passwordCannotEditDescription: "For security reasons, passwords cannot be edited. Please delete and re-add the account if you need to change the password.",
+    passwordCannotEditDescription:
+      "For security reasons, passwords cannot be edited. Please delete and re-add the account if you need to change the password.",
     actions: "Actions",
     configurationRequired: "Configuration Required",
-    configurationRequiredDescription: "Please configure CAS addresses, callbacks, and accounts in settings.",
+    configurationRequiredDescription:
+      "Please configure CAS addresses, callbacks, and accounts in settings.",
     openSettings: "Open Settings",
     selectCasAddress: "Select CAS address",
     selectAccount: "Select account",
@@ -204,10 +211,12 @@ export const translations: Record<Language, Translations> = {
     tokenKeys: "Token Storage Keys",
     addTokenKey: "Add Token Key",
     tokenKeyMapping: "Token Key Mapping",
-    tokenKeyMappingDescription: "Select which CAS response key to use for this callback's token",
+    tokenKeyMappingDescription:
+      "Select which CAS response key to use for this callback's token",
     selectTokenSource: "Select token source",
     enableCors: "Enable CORS",
-    enableCorsDescription: "Enable cross-origin request support for this callback address",
+    enableCorsDescription:
+      "Enable cross-origin request support for this callback address",
     theme: "Theme",
     themeDescription: "Select display theme",
     lightTheme: "Light",
@@ -222,7 +231,8 @@ export const translations: Record<Language, Translations> = {
     importError: "Failed to import configuration",
     selectFile: "Select File",
     importWarning: "Import Warning",
-    importWarningDescription: "Importing will overwrite existing CAS and callback configurations. This action cannot be undone.",
+    importWarningDescription:
+      "Importing will overwrite existing CAS and callback configurations. This action cannot be undone.",
     success: "Success",
     error: "Error",
     casAddedSuccess: "CAS address added successfully",
@@ -235,6 +245,8 @@ export const translations: Record<Language, Translations> = {
     accountDeletedSuccess: "Account deleted successfully",
     keyInitializedSuccess: "Encryption key initialized successfully",
     configCopiedSuccess: "Configuration copied successfully",
+    yes: "YES",
+    no: "NO"
   },
   zh: {
     appName: "Peaks Login",
@@ -283,6 +295,7 @@ export const translations: Record<Language, Translations> = {
     deleteCallbackDescription: "将永久删除",
     accounts: "账号",
     accountsDescription: "配置登录账号（密码已加密存储）",
+    callbacks: "回调地址",
     accountName: "名称",
     accountUsername: "用户名",
     accountPassword: "密码",
@@ -296,7 +309,8 @@ export const translations: Record<Language, Translations> = {
     deleteAccountDescription: "将永久删除",
     passwordEncrypted: "•••••••• (已加密)",
     passwordCannotEdit: "密码不可修改",
-    passwordCannotEditDescription: "出于安全考虑，密码无法编辑。如需更改密码，请删除后重新添加账号。",
+    passwordCannotEditDescription:
+      "出于安全考虑，密码无法编辑。如需更改密码，请删除后重新添加账号。",
     actions: "操作",
     configurationRequired: "需要配置",
     configurationRequiredDescription: "请在设置中配置 CAS 地址、回调和账号。",
@@ -339,7 +353,8 @@ export const translations: Record<Language, Translations> = {
     importError: "配置导入失败",
     selectFile: "选择文件",
     importWarning: "导入警告",
-    importWarningDescription: "导入将覆盖现有的 CAS 和回调配置。此操作无法撤销。",
+    importWarningDescription:
+      "导入将覆盖现有的 CAS 和回调配置。此操作无法撤销。",
     success: "成功",
     error: "错误",
     casAddedSuccess: "CAS 地址添加成功",
@@ -352,5 +367,7 @@ export const translations: Record<Language, Translations> = {
     accountDeletedSuccess: "账号删除成功",
     keyInitializedSuccess: "加密密钥初始化成功",
     configCopiedSuccess: "配置复制成功",
-  },
+    yes: "是",
+    no: "否"
+  }
 }

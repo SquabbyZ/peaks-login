@@ -4,6 +4,7 @@ import "~/style.css"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent } from "~/components/ui/card"
 import { NativeSelect, NativeSelectOption } from "~/components/ui/native-select"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion"
 import { getAppSettings, setPopupState, getPopupState } from "~/lib/storage"
 import { useTranslation } from "~/lib/useTranslation"
 import { useTheme } from "~/lib/useTheme"
@@ -16,7 +17,8 @@ type LoginStatus = "idle" | "loading" | "success" | "error"
 function PopupIndex() {
   const { t } = useTranslation()
   const { resolvedTheme, toggleTheme } = useTheme()
-  const currentIcon = resolvedTheme === "dark" ? iconDark : icon
+  const currentIcon = resolvedTheme === "dark" ? iconDark: icon
+  const buttonCurrentIcon = resolvedTheme === "dark" ? icon: iconDark
   const [settings, setSettings] = useState<AppSettings>({
     casConfigs: [],
     callbackConfigs: [],
@@ -239,86 +241,109 @@ function PopupIndex() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <Server className="h-4 w-4 text-primary" />
-              <span>{t("casLoginAddresses")}</span>
-            </div>
-            <NativeSelect 
-              value={popupState.selectedCasId || ""} 
-              onChange={(e) => handleCasChange(e.target.value)}
-              placeholder={t("selectCasAddress")}
-              className={`${validationErrors.cas ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
-            >
-              {settings.casConfigs.map((cas) => (
-                <NativeSelectOption key={cas.id} value={cas.id}>
-                  {cas.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            {validationErrors.cas && (
-              <p className="text-xs text-destructive pl-1">{t("pleaseSelectCas")}</p>
-            )}
-            {selectedCas && (
-              <p className="text-xs text-muted-foreground pl-1 truncate">{selectedCas.url}</p>
-            )}
-          </div>
+        <Accordion type="multiple" defaultValue={["cas", "account", "callback"]} className="space-y-2">
+          <AccordionItem value="cas" className="border rounded-lg px-3">
+            <AccordionTrigger className="py-2 hover:no-underline">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Server className="h-4 w-4 text-primary" />
+                <span>{t("casLoginAddresses")}</span>
+                {selectedCas && (
+                  <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedCas.name}</span>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3 pt-0 space-y-1">
+              <NativeSelect 
+                value={popupState.selectedCasId || ""} 
+                onChange={(e) => handleCasChange(e.target.value)}
+                placeholder={t("selectCasAddress")}
+                className={`${validationErrors.cas ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
+              >
+                {settings.casConfigs.map((cas) => (
+                  <NativeSelectOption key={cas.id} value={cas.id}>
+                    {cas.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              {validationErrors.cas && (
+                <p className="text-xs text-destructive">{t("pleaseSelectCas")}</p>
+              )}
+              {selectedCas && (
+                <p className="text-xs text-muted-foreground truncate">{selectedCas.url}</p>
+              )}
+            </AccordionContent>
+          </AccordionItem>
 
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <User className="h-4 w-4 text-primary" />
-              <span>{t("accounts")}</span>
-            </div>
-            <NativeSelect 
-              value={popupState.selectedAccountId || ""} 
-              onChange={(e) => handleAccountChange(e.target.value)}
-              placeholder={t("selectAccount")}
-              className={`${validationErrors.account ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
-            >
-              {settings.accounts.map((account) => (
-                <NativeSelectOption key={account.id} value={account.id}>
-                  {account.name} ({account.username})
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            {validationErrors.account && (
-              <p className="text-xs text-destructive pl-1">{t("pleaseSelectAccount")}</p>
-            )}
-          </div>
+          <AccordionItem value="account" className="border rounded-lg px-3">
+            <AccordionTrigger className="py-2 hover:no-underline">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <User className="h-4 w-4 text-primary" />
+                <span>{t("accounts")}</span>
+                {selectedAccount && (
+                  <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedAccount.name}</span>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3 pt-0 space-y-1">
+              <NativeSelect 
+                value={popupState.selectedAccountId || ""} 
+                onChange={(e) => handleAccountChange(e.target.value)}
+                placeholder={t("selectAccount")}
+                className={`${validationErrors.account ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
+              >
+                {settings.accounts.map((account) => (
+                  <NativeSelectOption key={account.id} value={account.id}>
+                    {account.name} ({account.username})
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              {validationErrors.account && (
+                <p className="text-xs text-destructive">{t("pleaseSelectAccount")}</p>
+              )}
+            </AccordionContent>
+          </AccordionItem>
 
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <Link2 className="h-4 w-4 text-primary" />
-              <span>{t("callbackAddresses")}</span>
-            </div>
-            <NativeSelect 
-              value={popupState.selectedCallbackId || ""} 
-              onChange={(e) => handleCallbackChange(e.target.value)}
-              placeholder={t("selectCallbackAddress")}
-              className={`${validationErrors.callback ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
-            >
-              {settings.callbackConfigs.map((callback) => (
-                <NativeSelectOption key={callback.id} value={callback.id}>
-                  {callback.name}
-                </NativeSelectOption>
-              ))}
-            </NativeSelect>
-            {validationErrors.callback && (
-              <p className="text-xs text-destructive pl-1">{t("pleaseSelectCallback")}</p>
-            )}
-            {selectedCallback && (
-              <p className="text-xs text-muted-foreground pl-1 truncate">{selectedCallback.url}</p>
-            )}
-          </div>
+          <AccordionItem value="callback" className="border rounded-lg px-3">
+            <AccordionTrigger className="py-2 hover:no-underline">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                <Link2 className="h-4 w-4 text-primary" />
+                <span>{t("callbackAddresses")}</span>
+                {selectedCallback && (
+                  <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedCallback.name}</span>
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pb-3 pt-0 space-y-1">
+              <NativeSelect 
+                value={popupState.selectedCallbackId || ""} 
+                onChange={(e) => handleCallbackChange(e.target.value)}
+                placeholder={t("selectCallbackAddress")}
+                className={`${validationErrors.callback ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
+              >
+                {settings.callbackConfigs.map((callback) => (
+                  <NativeSelectOption key={callback.id} value={callback.id}>
+                    {callback.name}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+              {validationErrors.callback && (
+                <p className="text-xs text-destructive">{t("pleaseSelectCallback")}</p>
+              )}
+              {selectedCallback && (
+                <p className="text-xs text-muted-foreground truncate">{selectedCallback.url}</p>
+              )}
+            </AccordionContent>
+          </AccordionItem>
 
           {selectedCallback && selectedCallback.tokenKeys && selectedCallback.tokenKeys.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Key className="h-4 w-4 text-primary" />
-                <span>{t("tokenKeyMapping")}</span>
-              </div>
-              <div className="space-y-3">
+            <AccordionItem value="tokenMapping" className="border rounded-lg px-3">
+              <AccordionTrigger className="py-2 hover:no-underline">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <Key className="h-4 w-4 text-primary" />
+                  <span>{t("tokenKeyMapping")}</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pb-3 pt-0 space-y-3">
                 {selectedCallback.tokenKeys.map((tokenKey) => (
                   <div key={tokenKey} className="space-y-1">
                     <p className="text-xs text-muted-foreground">{tokenKey}</p>
@@ -336,10 +361,12 @@ function PopupIndex() {
                     </NativeSelect>
                   </div>
                 ))}
-              </div>
-            </div>
+              </AccordionContent>
+            </AccordionItem>
           )}
+        </Accordion>
 
+        <div className="mt-4 space-y-3">
           {loginStatus === "error" && (
             <Card className="border-destructive/50 bg-destructive/10 shadow-none">
               <CardContent className="p-3 flex items-center gap-2">
@@ -370,7 +397,7 @@ function PopupIndex() {
               </>
             ) : (
               <>
-                <img src={currentIcon} alt="" className="h-4 w-4 mr-2" />
+                <img src={buttonCurrentIcon} alt="" className="h-4 w-4 mr-2" />
                 {t("login")}
               </>
             )}
@@ -379,7 +406,7 @@ function PopupIndex() {
 
         <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            {settings.casConfigs.length} CAS · {settings.accounts.length} {t("accounts")} · {settings.callbackConfigs.length} callbacks
+            {settings.casConfigs.length} CAS · {settings.accounts.length} {t("accounts")} · {settings.callbackConfigs.length} {t("callbacks")}
           </p>
           <Button variant="link" size="sm" onClick={openOptions} className="h-auto p-0 text-xs text-primary">
             {t("settings")}

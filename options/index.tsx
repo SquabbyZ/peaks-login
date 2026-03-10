@@ -39,6 +39,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
 import { getAppSettings, setAppSettings, generateId, createTimestamp, getMasterKey, setMasterKey } from "~/lib/storage"
 import { encrypt, generateMasterKey, exportKey, importKey } from "~/lib/crypto"
 import { useTranslation } from "~/lib/useTranslation"
@@ -498,8 +500,9 @@ function OptionsIndex() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <TooltipProvider>
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex items-center justify-between pb-4 border-b">
           <div className="flex items-center gap-3">
             <img src={currentIcon} alt="Peaks Token" className="h-8 w-8" />
@@ -508,19 +511,10 @@ function OptionsIndex() {
               <p className="text-sm text-muted-foreground">{t("settingsDescription")}</p>
             </div>
           </div>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-primary" />
-              <CardTitle>{t("language")}</CardTitle>
-            </div>
-            <CardDescription>{t("languageDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent>
+          <div className="flex items-center gap-3">
             <Select value={language} onValueChange={(value: "en" | "zh") => setLanguage(value)}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-[100px]">
+                <Globe className="h-4 w-4 mr-1" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -528,49 +522,25 @@ function OptionsIndex() {
                 <SelectItem value="zh">中文</SelectItem>
               </SelectContent>
             </Select>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              {resolvedTheme === "dark" ? (
-                <Moon className="h-5 w-5 text-primary" />
-              ) : (
-                <Sun className="h-5 w-5 text-primary" />
-              )}
-              <CardTitle>{t("theme")}</CardTitle>
-            </div>
-            <CardDescription>{t("themeDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent>
             <Select value={theme} onValueChange={(value: "light" | "dark" | "system") => setTheme(value)}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue />
+              <SelectTrigger className="w-auto min-w-[100px] gap-1">
+                {resolvedTheme === "dark" ? (
+                  <Moon className="h-4 w-4 shrink-0" />
+                ) : (
+                  <Sun className="h-4 w-4 shrink-0" />
+                )}
+                <span className="whitespace-nowrap">
+                  {theme === "light" ? t("lightTheme") : theme === "dark" ? t("darkTheme") : t("systemTheme")}
+                </span>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="light">
-                  <div className="flex items-center gap-2">
-                    <Sun className="h-4 w-4" />
-                    {t("lightTheme")}
-                  </div>
-                </SelectItem>
-                <SelectItem value="dark">
-                  <div className="flex items-center gap-2">
-                    <Moon className="h-4 w-4" />
-                    {t("darkTheme")}
-                  </div>
-                </SelectItem>
-                <SelectItem value="system">
-                  <div className="flex items-center gap-2">
-                    <Globe className="h-4 w-4" />
-                    {t("systemTheme")}
-                  </div>
-                </SelectItem>
+                <SelectItem value="light">{t("lightTheme")}</SelectItem>
+                <SelectItem value="dark">{t("darkTheme")}</SelectItem>
+                <SelectItem value="system">{t("systemTheme")}</SelectItem>
               </SelectContent>
             </Select>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {!masterKeyString && (
           <Card className="border-primary/50 bg-primary/5">
@@ -596,147 +566,214 @@ function OptionsIndex() {
             </div>
             <CardDescription>{t("casLoginDescription")}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="cas-name">{t("casName")}</Label>
-                <Input
-                  id="cas-name"
-                  placeholder={t("casNamePlaceholder")}
-                  value={newCas.name}
-                  onChange={(e) => setNewCas({ ...newCas, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cas-url">{t("casUrl")}</Label>
-                <Input
-                  id="cas-url"
-                  placeholder={t("casUrlPlaceholder")}
-                  value={newCas.url}
-                  onChange={(e) => setNewCas({ ...newCas, url: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cas-username-field">{t("usernameField")}</Label>
-                <Input
-                  id="cas-username-field"
-                  placeholder="email"
-                  value={newCas.usernameField}
-                  onChange={(e) => setNewCas({ ...newCas, usernameField: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cas-password-field">{t("passwordField")}</Label>
-                <Input
-                  id="cas-password-field"
-                  placeholder="password"
-                  value={newCas.passwordField}
-                  onChange={(e) => setNewCas({ ...newCas, passwordField: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cas-token-response-key">{t("tokenResponseKey")}</Label>
-                <Input
-                  id="cas-token-response-key"
-                  placeholder={t("tokenResponseKeyPlaceholder")}
-                  value={newCas.tokenResponseKey}
-                  onChange={(e) => setNewCas({ ...newCas, tokenResponseKey: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button onClick={addCasConfig} disabled={!newCas.name || !newCas.url}>
-                <Plus className="h-4 w-4 mr-2" />
-                {t("addCasAddress")}
-              </Button>
-              <Button onClick={exportCasConfig} variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                {t("exportConfig")}
-              </Button>
-              <div className="relative">
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={importCasConfig}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  id="import-cas-file"
-                />
-                <Button variant="outline" size="sm" className="cursor-pointer">
-                  <Upload className="h-4 w-4 mr-2" />
-                  {t("importConfig")}
-                </Button>
-              </div>
-            </div>
-
-            {settings.casConfigs.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("casName")}</TableHead>
-                    <TableHead>{t("casUrl")}</TableHead>
-                    <TableHead className="w-[150px]">{t("actions")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {settings.casConfigs.map((cas) => (
-                    <TableRow key={cas.id}>
-                      <TableCell className="font-medium">{cas.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{cas.url}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditCas(cas)}
-                            className="text-primary hover:text-primary"
-                            title={t("edit")}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => copyCasConfig(cas)}
-                            className="text-primary hover:text-primary"
-                            title={t("copy")}
-                          >
-                            {copiedId === cas.id ? (
-                              <Check className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>{t("deleteCasTitle")}</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t("deleteCasDescription")} "{cas.name}"
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteItem("cas", cas.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  {t("delete")}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+          <CardContent>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="add-cas" className="border-0">
+                <AccordionTrigger className="py-2">{t("addCasAddress")}</AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="cas-name">{t("casName")}</Label>
+                      <Input
+                        id="cas-name"
+                        placeholder={t("casNamePlaceholder")}
+                        value={newCas.name}
+                        onChange={(e) => setNewCas({ ...newCas, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cas-url">{t("casUrl")}</Label>
+                      <Input
+                        id="cas-url"
+                        placeholder={t("casUrlPlaceholder")}
+                        value={newCas.url}
+                        onChange={(e) => setNewCas({ ...newCas, url: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cas-username-field">{t("usernameField")}</Label>
+                      <Input
+                        id="cas-username-field"
+                        placeholder="email"
+                        value={newCas.usernameField}
+                        onChange={(e) => setNewCas({ ...newCas, usernameField: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cas-password-field">{t("passwordField")}</Label>
+                      <Input
+                        id="cas-password-field"
+                        placeholder="password"
+                        value={newCas.passwordField}
+                        onChange={(e) => setNewCas({ ...newCas, passwordField: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cas-token-response-key">{t("tokenResponseKey")}</Label>
+                      <Input
+                        id="cas-token-response-key"
+                        placeholder={t("tokenResponseKeyPlaceholder")}
+                        value={newCas.tokenResponseKey}
+                        onChange={(e) => setNewCas({ ...newCas, tokenResponseKey: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 mt-4">
+                    <Button onClick={addCasConfig} disabled={!newCas.name || !newCas.url}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      {t("addCasAddress")}
+                    </Button>
+                    <Button onClick={exportCasConfig} variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      {t("exportConfig")}
+                    </Button>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept=".json"
+                        onChange={importCasConfig}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        id="import-cas-file"
+                      />
+                      <Button variant="outline" size="sm" className="cursor-pointer">
+                        <Upload className="h-4 w-4 mr-2" />
+                        {t("importConfig")}
+                      </Button>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              
+              {settings.casConfigs.length > 0 && (
+                <AccordionItem value="cas-list" className="border-0">
+                  <AccordionTrigger className="py-2">
+                    {t("casLoginAddresses")} ({settings.casConfigs.length})
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                        <TableRow>
+                          <TableHead className="max-w-[150px] whitespace-nowrap">{t("casName")}</TableHead>
+                          <TableHead className="max-w-[250px] whitespace-nowrap">{t("casUrl")}</TableHead>
+                          <TableHead className="max-w-[120px] whitespace-nowrap">{t("usernameField")}</TableHead>
+                          <TableHead className="max-w-[120px] whitespace-nowrap">{t("passwordField")}</TableHead>
+                          <TableHead className="max-w-[150px] whitespace-nowrap">{t("tokenResponseKey")}</TableHead>
+                          <TableHead className="w-[150px] text-right whitespace-nowrap">{t("actions")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                        <TableBody>
+                          {settings.casConfigs.map((cas) => (
+                            <TableRow key={cas.id}>
+                              <TableCell className="max-w-[150px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate font-medium cursor-default">{cas.name}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{cas.name}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="max-w-[250px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate text-muted-foreground cursor-default">{cas.url}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{cas.url}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="max-w-[120px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate cursor-default">{cas.usernameField || "email"}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{cas.usernameField || "email"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="max-w-[120px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate cursor-default">{cas.passwordField || "password"}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{cas.passwordField || "password"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="max-w-[150px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate cursor-default">{cas.tokenResponseKey || "token"}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{cas.tokenResponseKey || "token"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center gap-1 justify-end">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openEditCas(cas)}
+                                    className="text-primary hover:text-primary"
+                                    title={t("edit")}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => copyCasConfig(cas)}
+                                    className="text-primary hover:text-primary"
+                                    title={t("copy")}
+                                  >
+                                    {copiedId === cas.id ? (
+                                      <Check className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                      <Copy className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>{t("deleteCasTitle")}</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          {t("deleteCasDescription")} "{cas.name}"
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => deleteItem("cas", cas.id)}
+                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                          {t("delete")}
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+            </Accordion>
           </CardContent>
         </Card>
 
@@ -748,7 +785,11 @@ function OptionsIndex() {
             </div>
             <CardDescription>{t("callbackDescription")}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="add-callback" className="border-0">
+                <AccordionTrigger className="py-2">{t("addCallbackAddress")}</AccordionTrigger>
+                <AccordionContent className="pb-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="callback-name">{t("callbackName")}</Label>
@@ -817,103 +858,123 @@ function OptionsIndex() {
                 <p className="text-xs text-muted-foreground">{t("enableCorsDescription")}</p>
               </div>
               <Switch
-                checked={newCallback.enableCors}
+                checked={newCallback.enableCors ?? false}
                 onCheckedChange={(checked) => setNewCallback({ ...newCallback, enableCors: checked })}
               />
             </div>
-            <div className="flex items-center gap-3">
-              <Button onClick={addCallbackConfig} disabled={!newCallback.name || !newCallback.url}>
-                <Plus className="h-4 w-4 mr-2" />
-                {t("addCallbackAddress")}
-              </Button>
-              <Button onClick={exportCallbackConfig} variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                {t("exportConfig")}
-              </Button>
-              <div className="relative">
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={importCallbackConfig}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  id="import-callback-file"
-                />
-                <Button variant="outline" size="sm" className="cursor-pointer">
-                  <Upload className="h-4 w-4 mr-2" />
-                  {t("importConfig")}
-                </Button>
-              </div>
-            </div>
-
+            </AccordionContent>
+            </AccordionItem>
+            
             {settings.callbackConfigs.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("callbackName")}</TableHead>
-                    <TableHead>{t("callbackUrl")}</TableHead>
-                    <TableHead className="w-[150px]">{t("actions")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {settings.callbackConfigs.map((callback) => (
-                    <TableRow key={callback.id}>
-                      <TableCell className="font-medium">{callback.name}</TableCell>
-                      <TableCell className="text-muted-foreground">{callback.url}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditCallback(callback)}
-                            className="text-primary hover:text-primary"
-                            title={t("edit")}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => copyCallbackConfig(callback)}
-                            className="text-primary hover:text-primary"
-                            title={t("copy")}
-                          >
-                            {copiedId === callback.id ? (
-                              <Check className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>{t("deleteCallbackTitle")}</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t("deleteCallbackDescription")} "{callback.name}"
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteItem("callback", callback.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              <AccordionItem value="callback-list" className="border-0">
+                <AccordionTrigger className="py-2">
+                  {t("callbackAddresses")} ({settings.callbackConfigs.length})
+                </AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="max-w-[150px] whitespace-nowrap">{t("callbackName")}</TableHead>
+                          <TableHead className="max-w-[250px] whitespace-nowrap">{t("callbackUrl")}</TableHead>
+                          <TableHead className="max-w-[200px] whitespace-nowrap">{t("tokenKeys")}</TableHead>
+                          <TableHead className="max-w-[100px] whitespace-nowrap">{t("enableCors")}</TableHead>
+                          <TableHead className="w-[150px] text-right whitespace-nowrap">{t("actions")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {settings.callbackConfigs.map((callback) => (
+                          <TableRow key={callback.id}>
+                              <TableCell className="max-w-[150px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate font-medium cursor-default">{callback.name}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{callback.name}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="max-w-[250px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate text-muted-foreground cursor-default">{callback.url}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{callback.url}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="max-w-[200px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate text-muted-foreground cursor-default">{callback.tokenKeys?.join(", ") || "accessToken"}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{callback.tokenKeys?.join(", ") || "accessToken"}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="max-w-[100px]">{(callback.enableCors ?? false) ? "Yes" : "No"}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center gap-1 justify-end">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => openEditCallback(callback)}
+                                  className="text-primary hover:text-primary"
+                                  title={t("edit")}
                                 >
-                                  {t("delete")}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => copyCallbackConfig(callback)}
+                                  className="text-primary hover:text-primary"
+                                  title={t("copy")}
+                                >
+                                  {copiedId === callback.id ? (
+                                    <Check className="h-4 w-4 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>{t("deleteCallbackTitle")}</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        {t("deleteCallbackDescription")} "{callback.name}"
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={() => deleteItem("callback", callback.id)}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        {t("delete")}
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             )}
+            </Accordion>
           </CardContent>
         </Card>
 
@@ -925,116 +986,151 @@ function OptionsIndex() {
             </div>
             <CardDescription>{t("accountsDescription")}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="account-name">{t("accountName")}</Label>
-                <Input
-                  id="account-name"
-                  placeholder={t("accountNamePlaceholder")}
-                  value={newAccount.name}
-                  onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="account-username">{t("accountUsername")}</Label>
-                <Input
-                  id="account-username"
-                  placeholder={t("accountUsernamePlaceholder")}
-                  value={newAccount.username}
-                  onChange={(e) => setNewAccount({ ...newAccount, username: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="account-password">{t("accountPassword")}</Label>
-                <Input
-                  id="account-password"
-                  type="password"
-                  placeholder={t("accountPasswordPlaceholder")}
-                  value={newAccount.password}
-                  onChange={(e) => setNewAccount({ ...newAccount, password: e.target.value })}
-                />
-              </div>
-            </div>
-            <Button
-              onClick={addAccount}
-              disabled={!newAccount.name || !newAccount.username || !newAccount.password}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              {t("addAccount")}
-            </Button>
-
-            {settings.accounts.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t("accountName")}</TableHead>
-                    <TableHead>{t("accountUsername")}</TableHead>
-                    <TableHead>{t("accountPassword")}</TableHead>
-                    <TableHead className="w-[150px]">{t("actions")}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {settings.accounts.map((account) => (
-                    <TableRow key={account.id}>
-                      <TableCell className="font-medium">{account.name}</TableCell>
-                      <TableCell>{account.username}</TableCell>
-                      <TableCell className="text-muted-foreground">{t("passwordEncrypted")}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => openEditAccount(account)}
-                            className="text-primary hover:text-primary"
-                            title={t("edit")}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => copyAccountConfig(account)}
-                            className="text-primary hover:text-primary"
-                            title={t("copy")}
-                          >
-                            {copiedId === account.id ? (
-                              <Check className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>{t("deleteAccountTitle")}</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t("deleteAccountDescription")} "{account.name}"
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={() => deleteItem("account", account.id)}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                >
-                                  {t("delete")}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+          <CardContent>
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="add-account" className="border-0">
+                <AccordionTrigger className="py-2">{t("addAccount")}</AccordionTrigger>
+                <AccordionContent className="pb-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="account-name">{t("accountName")}</Label>
+                      <Input
+                        id="account-name"
+                        placeholder={t("accountNamePlaceholder")}
+                        value={newAccount.name}
+                        onChange={(e) => setNewAccount({ ...newAccount, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="account-username">{t("accountUsername")}</Label>
+                      <Input
+                        id="account-username"
+                        placeholder={t("accountUsernamePlaceholder")}
+                        value={newAccount.username}
+                        onChange={(e) => setNewAccount({ ...newAccount, username: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="account-password">{t("accountPassword")}</Label>
+                      <Input
+                        id="account-password"
+                        type="password"
+                        placeholder={t("accountPasswordPlaceholder")}
+                        value={newAccount.password}
+                        onChange={(e) => setNewAccount({ ...newAccount, password: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    onClick={addAccount}
+                    disabled={!newAccount.name || !newAccount.username || !newAccount.password}
+                    className="mt-4"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {t("addAccount")}
+                  </Button>
+                </AccordionContent>
+              </AccordionItem>
+              
+              {settings.accounts.length > 0 && (
+                <AccordionItem value="account-list" className="border-0">
+                  <AccordionTrigger className="py-2">
+                    {t("accounts")} ({settings.accounts.length})
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-4">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                        <TableRow>
+                          <TableHead className="max-w-[150px] whitespace-nowrap">{t("accountName")}</TableHead>
+                          <TableHead className="max-w-[150px] whitespace-nowrap">{t("accountUsername")}</TableHead>
+                          <TableHead className="max-w-[150px] whitespace-nowrap">{t("accountPassword")}</TableHead>
+                          <TableHead className="w-[150px] text-right whitespace-nowrap">{t("actions")}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                        <TableBody>
+                          {settings.accounts.map((account) => (
+                            <TableRow key={account.id}>
+                              <TableCell className="max-w-[150px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate font-medium cursor-default">{account.name}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{account.name}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="max-w-[150px]">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="block truncate cursor-default">{account.username}</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>{account.username}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TableCell>
+                              <TableCell className="text-muted-foreground max-w-[150px]">{t("passwordEncrypted")}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex items-center gap-1 justify-end">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openEditAccount(account)}
+                                    className="text-primary hover:text-primary"
+                                    title={t("edit")}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => copyAccountConfig(account)}
+                                    className="text-primary hover:text-primary"
+                                    title={t("copy")}
+                                  >
+                                    {copiedId === account.id ? (
+                                      <Check className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                      <Copy className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>{t("deleteAccountTitle")}</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          {t("deleteAccountDescription")} "{account.name}"
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={() => deleteItem("account", account.id)}
+                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        >
+                                          {t("delete")}
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              )}
+            </Accordion>
           </CardContent>
         </Card>
       </div>
@@ -1171,7 +1267,7 @@ function OptionsIndex() {
                 <p className="text-xs text-muted-foreground">{t("enableCorsDescription")}</p>
               </div>
               <Switch
-                checked={editCallbackData.enableCors}
+                checked={editCallbackData.enableCors ?? false}
                 onCheckedChange={(checked) => setEditCallbackData({ ...editCallbackData, enableCors: checked })}
               />
             </div>
@@ -1233,6 +1329,7 @@ function OptionsIndex() {
       </Dialog>
       <Toaster />
     </div>
+    </TooltipProvider>
   )
 }
 
