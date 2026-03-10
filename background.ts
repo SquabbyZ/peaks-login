@@ -151,11 +151,9 @@ async function navigateAndInjectTokens(
   console.log("[Peaks Login] tokens:", tokens)
   console.log("[Peaks Login] callbackUrl:", trimmedUrl)
   
-  // 先获取当前 tab 的 URL，判断是否需要导航
   const tab = await chrome.tabs.get(tabId)
   const currentUrl = tab.url || ""
   
-  // 检查是否是受限页面（chrome://, edge://, about: 等）
   const isRestrictedUrl = (url: string) => {
     return url.startsWith('chrome://') || 
            url.startsWith('chrome-extension://') ||
@@ -165,20 +163,10 @@ async function navigateAndInjectTokens(
            url === ''
   }
   
-  // 构建带有 token 数据的 URL（通过 URL 参数传递给 content script）
-  const buildUrlWithTokens = (baseUrl: string, tokens: Record<string, string>): string => {
-    const url = new URL(baseUrl)
-    const tokenData = JSON.stringify({ tokens })
-    url.searchParams.set('__peaks_login_inject__', encodeURIComponent(tokenData))
-    return url.toString()
-  }
-  
-  // 提取 URL 的基础部分（不含 query string 和 hash）用于比较
   const getBaseUrl = (url: string) => url.split('?')[0].split('#')[0]
   const currentBaseUrl = getBaseUrl(currentUrl)
   const targetBaseUrl = getBaseUrl(trimmedUrl)
   
-  // 检查是否已经在目标页面（受限页面不算在目标页面）
   const isOnTargetPage = !isRestrictedUrl(currentUrl) && 
     (currentBaseUrl === targetBaseUrl || currentUrl.startsWith(targetBaseUrl))
   
@@ -186,16 +174,25 @@ async function navigateAndInjectTokens(
     console.log("[Peaks Login] Current tab is restricted URL, will navigate to target:", currentUrl)
   }
   
-  // 构建带 token 参数的目标 URL
-  const urlWithTokens = buildUrlWithTokens(trimmedUrl, tokens)
-  console.log("[Peaks Login] URL with tokens:", urlWithTokens)
-  
-  // 无论是否在目标页面，都导航到带 token 参数的 URL
-  // content script 会在 document_start 时读取参数并注入
-  console.log("[Peaks Login] Navigating to URL with token params...")
-  await chrome.tabs.update(tabId, { url: urlWithTokens })
-  
-  console.log("[Peaks Login] Navigation triggered, content script will handle injection")
+  if (isOnTargetPage) {
+    console.log("[Peaks Login] Already on target page, injecting tokens and reloading...")
+    await injectTokensToPage(tabId, tokens, true, currentUrl.split('?')[0].split('#')[0])
+  } else {
+    const buildUrlWithTokens = (baseUrl: string, tokens: Record<string, string>): string => {
+      const url = new URL(baseUrl)
+      const tokenData = JSON.stringify({ tokens })
+      url.searchParams.set('__peaks_login_inject__', encodeURIComponent(tokenData))
+      return url.toString()
+    }
+    
+    const urlWithTokens = buildUrlWithTokens(trimmedUrl, tokens)
+    console.log("[Peaks Login] URL with tokens:", urlWithTokens)
+    
+    console.log("[Peaks Login] Navigating to URL with token params...")
+    await chrome.tabs.update(tabId, { url: urlWithTokens })
+    
+    console.log("[Peaks Login] Navigation triggered, content script will handle injection")
+  }
 }
 
 // 安全地发送响应，避免消息通道关闭时报错

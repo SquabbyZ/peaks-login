@@ -9,6 +9,7 @@ import { getAppSettings, setPopupState, getPopupState } from "~/lib/storage"
 import { useTranslation } from "~/lib/useTranslation"
 import { useTheme } from "~/lib/useTheme"
 import { Server, User, Link2, Loader2, Settings, CheckCircle2, AlertCircle, ChevronRight, Key, Moon, Sun } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
 import icon from "~/assets/icon.png"
 import iconDark from "~/assets/icon-dark.png"
 
@@ -210,6 +211,7 @@ function PopupIndex() {
   }
 
   return (
+    <TooltipProvider>
     <div className="w-[340px] bg-background">
       <div className="p-5">
         <div className="flex items-center justify-between mb-6">
@@ -248,7 +250,14 @@ function PopupIndex() {
                 <Server className="h-4 w-4 text-primary" />
                 <span>{t("casLoginAddresses")}</span>
                 {selectedCas && (
-                  <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedCas.name}</span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedCas.name}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{selectedCas.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
             </AccordionTrigger>
@@ -269,7 +278,14 @@ function PopupIndex() {
                 <p className="text-xs text-destructive">{t("pleaseSelectCas")}</p>
               )}
               {selectedCas && (
-                <p className="text-xs text-muted-foreground truncate">{selectedCas.url}</p>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-muted-foreground truncate text-left w-full">{selectedCas.url}</p>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{selectedCas.url}</p>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </AccordionContent>
           </AccordionItem>
@@ -280,7 +296,14 @@ function PopupIndex() {
                 <User className="h-4 w-4 text-primary" />
                 <span>{t("accounts")}</span>
                 {selectedAccount && (
-                  <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedAccount.name}</span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedAccount.name}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{selectedAccount.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
             </AccordionTrigger>
@@ -309,7 +332,14 @@ function PopupIndex() {
                 <Link2 className="h-4 w-4 text-primary" />
                 <span>{t("callbackAddresses")}</span>
                 {selectedCallback && (
-                  <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedCallback.name}</span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedCallback.name}</span>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{selectedCallback.name}</p>
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
             </AccordionTrigger>
@@ -330,7 +360,14 @@ function PopupIndex() {
                 <p className="text-xs text-destructive">{t("pleaseSelectCallback")}</p>
               )}
               {selectedCallback && (
-                <p className="text-xs text-muted-foreground truncate">{selectedCallback.url}</p>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-muted-foreground truncate text-left w-full">{selectedCallback.url}</p>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{selectedCallback.url}</p>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </AccordionContent>
           </AccordionItem>
@@ -414,6 +451,7 @@ function PopupIndex() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   )
 }
 

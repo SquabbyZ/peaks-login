@@ -44,9 +44,27 @@ export function useTheme() {
     }
   }, [theme, getSystemTheme])
 
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "theme" && e.newValue) {
+        const newTheme = e.newValue as Theme
+        if (["light", "dark", "system"].includes(newTheme)) {
+          setThemeState(newTheme)
+        }
+      }
+    }
+
+    window.addEventListener("storage", handleStorageChange)
+    return () => window.removeEventListener("storage", handleStorageChange)
+  }, [])
+
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme)
     localStorage.setItem("theme", newTheme)
+    window.dispatchEvent(new StorageEvent("storage", {
+      key: "theme",
+      newValue: newTheme,
+    }))
   }, [])
 
   const toggleTheme = useCallback(() => {
