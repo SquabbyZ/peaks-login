@@ -19,6 +19,7 @@ import {
   Settings,
   Shield,
   Sun,
+  Trash2,
   Upload,
   User
 } from "lucide-react"
@@ -48,6 +49,16 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "~/components/ui/tooltip"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "~/components/ui/alert-dialog"
 import { useToast } from "~/hooks/use-toast"
 import { encrypt, exportKey, generateMasterKey, importKey } from "~/lib/crypto"
 import {
@@ -99,7 +110,8 @@ function OptionsIndex() {
   })
   const [masterKeyString, setMasterKeyString] = useState<string>("")
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const { combos } = useCombos()
+  const [clearOpen, setClearOpen] = useState(false)
+  const { combos, remove: removeCombo } = useCombos()
 
   const loadSettings = useCallback(async () => {
     const loaded = await getAppSettings()
@@ -654,31 +666,90 @@ function OptionsIndex() {
                 setActiveTab(v as "combos" | "cas" | "callback" | "account")
               }
               className="w-full">
-              <TabsList>
-                <TabsTrigger value="combos">
-                  <Plus className="mr-2 h-4 w-4" />
-                  登录组合
-                  {combos.length > 0 && (
-                    <span
-                      data-testid="combos-tab-badge"
-                      className="ml-2 rounded-full bg-primary px-2 text-xs text-primary-foreground">
-                      {combos.length}
-                    </span>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="cas">
-                  <Server className="mr-2 h-4 w-4" />
-                  CAS 登录地址
-                </TabsTrigger>
-                <TabsTrigger value="callback">
-                  <Link2 className="mr-2 h-4 w-4" />
-                  回调地址
-                </TabsTrigger>
-                <TabsTrigger value="account">
-                  <User className="mr-2 h-4 w-4" />
-                  账号
-                </TabsTrigger>
-              </TabsList>
+              <div className="flex items-center justify-between gap-2">
+                <TabsList>
+                  <TabsTrigger value="combos">
+                    <Plus className="mr-2 h-4 w-4" />
+                    登录组合
+                    {combos.length > 0 && (
+                      <span
+                        data-testid="combos-tab-badge"
+                        className="ml-2 rounded-full bg-primary px-2 text-xs text-primary-foreground">
+                        {combos.length}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="cas">
+                    <Server className="mr-2 h-4 w-4" />
+                    CAS 登录地址
+                  </TabsTrigger>
+                  <TabsTrigger value="callback">
+                    <Link2 className="mr-2 h-4 w-4" />
+                    回调地址
+                  </TabsTrigger>
+                  <TabsTrigger value="account">
+                    <User className="mr-2 h-4 w-4" />
+                    账号
+                  </TabsTrigger>
+                </TabsList>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setClearOpen(true)}
+                        data-testid="clear-tab-button"
+                        aria-label="清空当前 tab"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        清空
+                        {activeTab === "combos"
+                          ? "登录组合"
+                          : activeTab === "cas"
+                            ? "CAS 登录地址"
+                            : activeTab === "callback"
+                              ? "回调地址"
+                              : "账号"}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
+              <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>确认清空?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      将永久删除
+                      {activeTab === "combos"
+                        ? "所有登录组合"
+                        : activeTab === "cas"
+                          ? "所有 CAS 登录地址"
+                          : activeTab === "callback"
+                            ? "所有回调地址"
+                            : "所有账号"}
+                      。 此操作不可撤销。
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>取消</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        void clearActiveTab()
+                        setClearOpen(false)
+                      }}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      确认清空
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <TabsContent value="combos">
                 <CombosSection settings={settings} />
               </TabsContent>
