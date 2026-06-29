@@ -133,6 +133,7 @@ export interface Translations {
   comboNameRequired: string
   comboRequiredFields: string
   comboTag: string
+  tag: string
   comboCas: string
   comboAccount: string
   comboCallback: string
@@ -348,6 +349,7 @@ export const translations: Record<Language, Translations> = {
     comboNameRequired: "Please enter a combo name",
     comboRequiredFields: "Please select CAS / Account / Callback",
     comboTag: "Tag",
+    tag: "Tag",
     comboCas: "CAS",
     comboAccount: "Account",
     comboCallback: "Callback",
@@ -559,6 +561,7 @@ export const translations: Record<Language, Translations> = {
     comboNameRequired: "请输入组合名称",
     comboRequiredFields: "请选择 CAS / 账号 / 回调",
     comboTag: "标签",
+    tag: "标签",
     comboCas: "CAS",
     comboAccount: "账号",
     comboCallback: "回调",

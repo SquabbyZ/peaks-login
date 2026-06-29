@@ -71,7 +71,8 @@ describe("CasSection table scroll wrapper", () => {
       // table so the per-cell sticky takes effect.
       expect(th.className).toContain("sticky")
       expect(th.className).toContain("top-0")
-      expect(th.className).toContain("z-10")
+      // z-index 必须属于 sticky 层: z-10 普通 / z-20 左/右角
+      expect(/\bz-(?:10|20)\b/.test(th.className)).toBe(true)
       expect(th.className).toContain("bg-card")
     })
     // The table itself must use border-separate so sticky <th> works.

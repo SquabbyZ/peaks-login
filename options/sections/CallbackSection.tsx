@@ -209,17 +209,17 @@ export function CallbackSection({
           <div
             data-testid="callback-table-scroll"
             className="mb-4 max-h-[60vh] overflow-x-auto overflow-y-auto rounded-md border border-border">
-            <Table className="border-separate border-spacing-0">
+            <Table className="min-w-[960px] border-separate border-spacing-0">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="sticky top-0 z-10 max-w-[150px] whitespace-nowrap bg-card">
+                  <TableHead className="sticky left-0 top-0 z-20 w-[150px] min-w-[150px] whitespace-nowrap bg-card">
                     {t("callbackName")}
                   </TableHead>
                   <TableHead className="sticky top-0 z-10 max-w-[200px] whitespace-nowrap bg-card">
                     {t("callbackUrl")}
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 max-w-[120px] whitespace-nowrap bg-card">
-                    标签
+                  <TableHead className="sticky top-0 z-10 w-[140px] min-w-[140px] whitespace-nowrap bg-card">
+                    {t("tag")}
                   </TableHead>
                   <TableHead className="sticky top-0 z-10 max-w-[200px] whitespace-nowrap bg-card">
                     {t("tokenKeys")}
@@ -227,7 +227,7 @@ export function CallbackSection({
                   <TableHead className="sticky top-0 z-10 max-w-[100px] whitespace-nowrap bg-card">
                     {t("enableCors")}
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 w-[150px] whitespace-nowrap bg-card text-right">
+                  <TableHead className="sticky right-0 top-0 z-20 w-[150px] min-w-[150px] whitespace-nowrap bg-card text-right">
                     {t("actions")}
                   </TableHead>
                 </TableRow>
@@ -238,13 +238,13 @@ export function CallbackSection({
                   const cbTag = cbTagId ? tagMap.get(cbTagId) : null
                   return (
                     <TableRow key={cb.id}>
-                      <TableCell className="max-w-[150px] truncate font-medium">
+                      <TableCell className="sticky left-0 z-10 w-[150px] min-w-[150px] whitespace-nowrap bg-card font-medium">
                         {cb.name}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate text-muted-foreground">
                         {cb.url}
                       </TableCell>
-                      <TableCell className="max-w-[120px]">
+                      <TableCell className="w-[140px] min-w-[140px] whitespace-nowrap">
                         {cbTag ? <TagBadge tag={cbTag} /> : null}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate text-muted-foreground">
@@ -253,7 +253,7 @@ export function CallbackSection({
                       <TableCell className="max-w-[100px]">
                         {(cb.enableCors ?? false) ? "Yes" : "No"}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="sticky right-0 z-10 w-[150px] min-w-[150px] whitespace-nowrap bg-card text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">

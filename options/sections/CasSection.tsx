@@ -213,17 +213,17 @@ export function CasSection({
           <div
             data-testid="cas-table-scroll"
             className="mb-4 max-h-[60vh] overflow-x-auto overflow-y-auto rounded-md border border-border">
-            <Table className="border-separate border-spacing-0">
+            <Table className="min-w-[1000px] border-separate border-spacing-0">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="sticky top-0 z-10 max-w-[150px] whitespace-nowrap bg-card">
+                  <TableHead className="sticky left-0 top-0 z-20 w-[150px] min-w-[150px] whitespace-nowrap bg-card">
                     {t("casName")}
                   </TableHead>
                   <TableHead className="sticky top-0 z-10 max-w-[170px] whitespace-nowrap bg-card">
                     {t("casUrl")}
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 max-w-[120px] whitespace-nowrap bg-card">
-                    标签
+                  <TableHead className="sticky top-0 z-10 w-[140px] min-w-[140px] whitespace-nowrap bg-card">
+                    {t("tag")}
                   </TableHead>
                   <TableHead className="sticky top-0 z-10 max-w-[120px] whitespace-nowrap bg-card">
                     {t("usernameField")}
@@ -234,7 +234,7 @@ export function CasSection({
                   <TableHead className="sticky top-0 z-10 max-w-[150px] whitespace-nowrap bg-card">
                     {t("tokenResponseKey")}
                   </TableHead>
-                  <TableHead className="sticky top-0 z-10 w-[150px] whitespace-nowrap bg-card text-right">
+                  <TableHead className="sticky right-0 top-0 z-20 w-[150px] min-w-[150px] whitespace-nowrap bg-card text-right">
                     {t("actions")}
                   </TableHead>
                 </TableRow>
@@ -245,13 +245,13 @@ export function CasSection({
                   const casTag = casTagId ? tagMap.get(casTagId) : null
                   return (
                     <TableRow key={cas.id}>
-                      <TableCell className="max-w-[150px] truncate font-medium">
+                      <TableCell className="sticky left-0 z-10 w-[150px] min-w-[150px] whitespace-nowrap bg-card font-medium">
                         {cas.name}
                       </TableCell>
                       <TableCell className="max-w-[170px] truncate text-muted-foreground">
                         {cas.url}
                       </TableCell>
-                      <TableCell className="max-w-[120px]">
+                      <TableCell className="w-[140px] min-w-[140px] whitespace-nowrap">
                         {casTag ? <TagBadge tag={casTag} /> : null}
                       </TableCell>
                       <TableCell className="max-w-[120px] truncate">
@@ -263,7 +263,7 @@ export function CasSection({
                       <TableCell className="max-w-[150px] truncate">
                         {cas.tokenResponseKey || "token"}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="sticky right-0 z-10 w-[150px] min-w-[150px] whitespace-nowrap bg-card text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
