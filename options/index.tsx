@@ -574,6 +574,7 @@ function OptionsIndex() {
                   onDelete={handleDeleteAccount}
                   onCopy={handleCopyAccount}
                   copiedId={copiedId}
+                  masterKey={masterKeyString}
                 />
               </TabsContent>
               <TabsContent value="combos">

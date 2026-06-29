@@ -60,6 +60,7 @@ interface AccountSectionProps {
   onDelete: (id: string) => Promise<void> | void
   onCopy: (config: AccountConfig) => Promise<void> | void
   copiedId: string | null
+  masterKey: string
 }
 
 const EMPTY_FORM: AccountFormData = { name: "", username: "", password: "" }
@@ -76,7 +77,8 @@ export function AccountSection({
   onEdit,
   onDelete,
   onCopy,
-  copiedId
+  copiedId,
+  masterKey
 }: AccountSectionProps) {
   const [addingOpen, setAddingOpen] = useState(false)
   const [editing, setEditing] = useState<AccountConfig | null>(null)
@@ -273,6 +275,7 @@ export function AccountSection({
         onAdd={handleAdd}
         onSaveEdit={handleSaveEdit}
         t={t}
+        masterKey={masterKey}
       />
     </Card>
   )
