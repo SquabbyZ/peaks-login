@@ -715,44 +715,65 @@ function OptionsIndex() {
                   <TabsTrigger value="cas">
                     <Server className="mr-2 h-4 w-4" />
                     CAS 登录地址
+                    {settings.casConfigs.length > 0 && (
+                      <span
+                        data-testid="cas-tab-badge"
+                        className="ml-2 rounded-full bg-primary px-2 text-xs text-primary-foreground">
+                        {settings.casConfigs.length}
+                      </span>
+                    )}
                   </TabsTrigger>
                   <TabsTrigger value="callback">
                     <Link2 className="mr-2 h-4 w-4" />
                     回调地址
+                    {settings.callbackConfigs.length > 0 && (
+                      <span
+                        data-testid="callback-tab-badge"
+                        className="ml-2 rounded-full bg-primary px-2 text-xs text-primary-foreground">
+                        {settings.callbackConfigs.length}
+                      </span>
+                    )}
                   </TabsTrigger>
                   <TabsTrigger value="account">
                     <User className="mr-2 h-4 w-4" />
                     账号
+                    {settings.accounts.length > 0 && (
+                      <span
+                        data-testid="account-tab-badge"
+                        className="ml-2 rounded-full bg-primary px-2 text-xs text-primary-foreground">
+                        {settings.accounts.length}
+                      </span>
+                    )}
                   </TabsTrigger>
                 </TabsList>
                 {activeTabCount > 0 && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setClearOpen(true)}
-                        data-testid="clear-tab-button"
-                        aria-label="清空当前 tab"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>
-                        清空
-                        {activeTab === "combos"
-                          ? "登录组合"
-                          : activeTab === "cas"
-                            ? "CAS 登录地址"
-                            : activeTab === "callback"
-                              ? "回调地址"
-                              : "账号"}
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setClearOpen(true)}
+                          data-testid="clear-tab-button"
+                          aria-label="清空当前 tab"
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          清空
+                          {activeTab === "combos"
+                            ? "登录组合"
+                            : activeTab === "cas"
+                              ? "CAS 登录地址"
+                              : activeTab === "callback"
+                                ? "回调地址"
+                                : "账号"}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 )}
               </div>
 
