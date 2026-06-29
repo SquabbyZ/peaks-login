@@ -14,7 +14,7 @@ const DEFAULT_POPUP_STATE: PopupState = {
   selectedCallbackId: null
 }
 
-const DEFAULT_LANGUAGE: Language = "en"
+const DEFAULT_LANGUAGE: Language = "zh"
 
 export interface MigrateResult {
   /** 本次启动是否实际写入了新 combo (升级成功) */
