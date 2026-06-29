@@ -104,10 +104,7 @@ const ComboCard = memo(function ComboCard({
           />
         )}
         {isError && (
-          <AlertCircle
-            className="h-4 w-4 text-destructive"
-            aria-label="失败"
-          />
+          <AlertCircle className="h-4 w-4 text-destructive" aria-label="失败" />
         )}
         {!isLoading && !isSuccess && !isError && (
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -117,11 +114,24 @@ const ComboCard = memo(function ComboCard({
   )
 })
 
+function ComboSkeleton() {
+  return (
+    <div
+      data-testid="combo-skeleton"
+      className="w-full rounded-lg border border-border p-3"
+      aria-hidden="true">
+      <div className="animate-pulse space-y-2">
+        <div className="h-4 w-1/3 rounded bg-muted" />
+        <div className="h-3 w-1/2 rounded bg-muted/60" />
+      </div>
+    </div>
+  )
+}
+
 function PopupIndex() {
   const { t, language, setLanguage } = useTranslation()
   const { resolvedTheme, toggleTheme } = useTheme()
   const currentIcon = resolvedTheme === "dark" ? iconDark : icon
-  const buttonCurrentIcon = resolvedTheme === "dark" ? icon : iconDark
 
   const { combos, loading: combosLoading, touch } = useCombos()
 
@@ -295,99 +305,16 @@ function PopupIndex() {
     }
   }
 
-  if (combosLoading) {
-    return (
-      <div className="flex h-[420px] w-[340px] items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">{t("loading")}</span>
-        </div>
-      </div>
-    )
-  }
-
   const hasUnderlyingConfigs =
     settings.casConfigs.length > 0 &&
     settings.accounts.length > 0 &&
     settings.callbackConfigs.length > 0
 
-  // 当没有底层配置 (CAS/账号/回调) 时, 引导去 options
-  if (!hasUnderlyingConfigs) {
-    return (
-      <TooltipProvider>
-        <div className="w-[340px] bg-background">
-          <div className="p-5">
-            <div className="mb-6 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-primary/10 p-2">
-                  <img
-                    src={currentIcon}
-                    alt="Peaks Login"
-                    className="h-5 w-5"
-                  />
-                </div>
-                <div>
-                  <h1 className="text-lg font-semibold text-foreground">
-                    {t("appName")}
-                  </h1>
-                  <p className="text-xs text-muted-foreground">
-                    {t("appDescription")}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleTheme}
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                  {resolvedTheme === "dark" ? (
-                    <Sun className="h-4 w-4" />
-                  ) : (
-                    <Moon className="h-4 w-4" />
-                  )}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={openOptions}
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                  <Settings className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <Card className="border-border bg-muted/50 shadow-none">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 rounded-md bg-muted p-1.5">
-                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="mb-1 text-sm font-medium text-foreground">
-                      {t("configurationRequired")}
-                    </p>
-                    <p className="mb-3 text-xs text-muted-foreground">
-                      {t("configurationRequiredDescription")}
-                    </p>
-                    <Button size="sm" onClick={openOptions}>
-                      {t("openSettings")}
-                      <ChevronRight className="ml-1 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </TooltipProvider>
-    )
-  }
-
   return (
     <TooltipProvider>
       <div className="w-[340px] bg-background">
         <div className="p-5">
+          {/* header: 永远立即渲染 (无 IO 依赖) */}
           <div className="mb-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-primary/10 p-2">
@@ -458,94 +385,133 @@ function PopupIndex() {
             </div>
           </div>
 
-          {combos.length > 0 && (
-            <div className="relative mb-2">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="搜索组合名称 / 标签"
-                className="h-8 pl-8 pr-8 text-xs"
-                data-testid="combo-search"
-              />
-              {searchInput && (
-                <button
-                  type="button"
-                  onClick={() => setSearchInput("")}
-                  aria-label="清除搜索"
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground">
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-          )}
-
-          {filteredCombos.length === 0 ? (
+          {/* 内容区: 根据数据状态分 3 支渲染 */}
+          {!hasUnderlyingConfigs ? (
             <Card className="border-border bg-muted/50 shadow-none">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
                   <div className="mt-0.5 rounded-md bg-muted p-1.5">
-                    <LogIn className="h-4 w-4 text-muted-foreground" />
+                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
                   </div>
                   <div className="flex-1">
                     <p className="mb-1 text-sm font-medium text-foreground">
-                      {combos.length === 0
-                        ? "还没有登录组合"
-                        : "没有匹配的组合"}
+                      {t("configurationRequired")}
                     </p>
                     <p className="mb-3 text-xs text-muted-foreground">
-                      先在选项页配好 CAS、账号、回调, 再把常用组合打包,
-                      这里就能一键登录。
+                      {t("configurationRequiredDescription")}
                     </p>
-                    <Button size="sm" onClick={() => openOptionsTab("combos")}>
-                      去选项页配置
+                    <Button size="sm" onClick={openOptions}>
+                      {t("openSettings")}
                       <ChevronRight className="ml-1 h-4 w-4" />
                     </Button>
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ) : (
+          ) : combosLoading ? (
             <div
-              data-testid="combos-list"
+              data-testid="combos-skeleton"
               className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
-              {filteredCombos.map((combo) => {
-                const effectiveTagId = combo.tagId ?? combo.tagIds?.[0]
-                const tag = effectiveTagId
-                  ? tagMap.get(effectiveTagId)
-                  : null
-                const isActive = activeId === combo.id
-                const isLoading = isActive && loginStatus === "loading"
-                const isSuccess = isActive && loginStatus === "success"
-                const isError = isActive && loginStatus === "error"
-                const disabled = loginStatus === "loading" && !isActive
-                return (
-                  <ComboCard
-                    key={combo.id}
-                    combo={combo}
-                    tag={tag}
-                    isActive={isActive}
-                    isLoading={isLoading}
-                    isSuccess={isSuccess}
-                    isError={isError}
-                    disabled={disabled}
-                    onClick={() => handleComboLogin(combo)}
-                  />
-                )
-              })}
+              <ComboSkeleton />
+              <ComboSkeleton />
+              <ComboSkeleton />
             </div>
+          ) : (
+            <>
+              {/* 搜索框: 加载完成后才有意义 (避免对空列表显示) */}
+              {combos.length > 0 && (
+                <div className="relative mb-2">
+                  <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="搜索组合名称 / 标签"
+                    className="h-8 pl-8 pr-8 text-xs"
+                    data-testid="combo-search"
+                  />
+                  {searchInput && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchInput("")}
+                      aria-label="清除搜索"
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {filteredCombos.length === 0 ? (
+                <Card className="border-border bg-muted/50 shadow-none">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="mt-0.5 rounded-md bg-muted p-1.5">
+                        <LogIn className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="mb-1 text-sm font-medium text-foreground">
+                          {combos.length === 0
+                            ? "还没有登录组合"
+                            : "没有匹配的组合"}
+                        </p>
+                        <p className="mb-3 text-xs text-muted-foreground">
+                          先在选项页配好 CAS、账号、回调, 再把常用组合打包,
+                          这里就能一键登录。
+                        </p>
+                        <Button
+                          size="sm"
+                          onClick={() => openOptionsTab("combos")}>
+                          去选项页配置
+                          <ChevronRight className="ml-1 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div
+                  data-testid="combos-list"
+                  className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
+                  {filteredCombos.map((combo) => {
+                    const effectiveTagId = combo.tagId ?? combo.tagIds?.[0]
+                    const tag = effectiveTagId
+                      ? tagMap.get(effectiveTagId)
+                      : null
+                    const isActive = activeId === combo.id
+                    const isLoading = isActive && loginStatus === "loading"
+                    const isSuccess = isActive && loginStatus === "success"
+                    const isError = isActive && loginStatus === "error"
+                    const disabled = loginStatus === "loading" && !isActive
+                    return (
+                      <ComboCard
+                        key={combo.id}
+                        combo={combo}
+                        tag={tag}
+                        isActive={isActive}
+                        isLoading={isLoading}
+                        isSuccess={isSuccess}
+                        isError={isError}
+                        disabled={disabled}
+                        onClick={() => handleComboLogin(combo)}
+                      />
+                    )
+                  })}
+                </div>
+              )}
+
+              {errorMessage && loginStatus === "error" && (
+                <Card className="mt-3 border-destructive/50 bg-destructive/10 shadow-none">
+                  <CardContent className="flex items-center gap-2 p-3">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
+                    <p className="text-sm text-destructive">{errorMessage}</p>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
 
-          {errorMessage && loginStatus === "error" && (
-            <Card className="mt-3 border-destructive/50 bg-destructive/10 shadow-none">
-              <CardContent className="flex items-center gap-2 p-3">
-                <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
-                <p className="text-sm text-destructive">{errorMessage}</p>
-              </CardContent>
-            </Card>
-          )}
-
+          {/* footer */}
           <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
             <p className="text-xs text-muted-foreground">
               {combos.length} 个登录组合
