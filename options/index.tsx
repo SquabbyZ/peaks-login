@@ -566,7 +566,9 @@ function OptionsIndex() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                    onClick={() =>
+                      setTheme(theme === "light" ? "dark" : "light")
+                    }
                     aria-label="切换主题"
                     className="h-8 w-8 text-muted-foreground hover:text-foreground">
                     {resolvedTheme === "dark" ? (
@@ -578,8 +580,7 @@ function OptionsIndex() {
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>
-                    主题:{" "}
-                    {theme === "light" ? t("lightTheme") : t("darkTheme")}
+                    主题: {theme === "light" ? t("lightTheme") : t("darkTheme")}
                   </p>
                 </TooltipContent>
               </Tooltip>
