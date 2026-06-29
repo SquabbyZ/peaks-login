@@ -9,7 +9,17 @@ import type {
 
 import "~/style.css"
 
-import { Globe, Moon, Plus, Settings, Shield, Sun } from "lucide-react"
+import {
+  Globe,
+  Link2,
+  Moon,
+  Plus,
+  Server,
+  Settings,
+  Shield,
+  Sun,
+  User
+} from "lucide-react"
 
 import iconDark from "~/assets/icon-dark.png"
 import icon from "~/assets/icon.png"
@@ -535,9 +545,7 @@ function OptionsIndex() {
             <Tabs
               value={activeTab}
               onValueChange={(v) =>
-                setActiveTab(
-                  v as "combos" | "cas" | "callback" | "account"
-                )
+                setActiveTab(v as "combos" | "cas" | "callback" | "account")
               }
               className="w-full">
               <TabsList>
@@ -553,15 +561,15 @@ function OptionsIndex() {
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="cas">
-                  <Settings className="mr-2 h-4 w-4" />
+                  <Server className="mr-2 h-4 w-4" />
                   CAS 登录地址
                 </TabsTrigger>
                 <TabsTrigger value="callback">
-                  <Settings className="mr-2 h-4 w-4" />
+                  <Link2 className="mr-2 h-4 w-4" />
                   回调地址
                 </TabsTrigger>
                 <TabsTrigger value="account">
-                  <Settings className="mr-2 h-4 w-4" />
+                  <User className="mr-2 h-4 w-4" />
                   账号
                 </TabsTrigger>
               </TabsList>
