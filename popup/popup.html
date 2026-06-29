@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peaks Login</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        color: #18181b;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      @media (prefers-color-scheme: dark) {
+        html, body { background: #09090b; color: #fafafa; }
+        .skel-bar { background: rgba(255,255,255,0.06) !important; }
+        .skel-circle { background: rgba(255,255,255,0.06) !important; }
+        .skel-card { border-color: rgba(255,255,255,0.08) !important; }
+        .skel-header { border-bottom-color: rgba(255,255,255,0.08) !important; }
+      }
+      #__plasmo { min-height: 200px; }
+      .skel-popup { width: 340px; padding: 20px; }
+      .skel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid rgba(0,0,0,0.08);
+      }
+      .skel-brand { display: flex; align-items: center; gap: 12px; }
+      .skel-logo {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      }
+      .skel-title-block { display: flex; flex-direction: column; gap: 6px; }
+      .skel-bar {
+        background: rgba(0,0,0,0.06);
+        border-radius: 4px;
+        animation: skel-pulse 1.4s ease-in-out infinite;
+      }
+      .skel-bar.title { width: 110px; height: 14px; }
+      .skel-bar.subtitle { width: 160px; height: 10px; }
+      .skel-icons { display: flex; gap: 4px; }
+      .skel-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: rgba(0,0,0,0.06);
+        animation: skel-pulse 1.4s ease-in-out infinite;
+      }
+      .skel-search { height: 32px; border-radius: 6px; margin-bottom: 8px; }
+      .skel-cards { display: flex; flex-direction: column; gap: 8px; }
+      .skel-card {
+        border: 1px solid rgba(0,0,0,0.08);
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        animation: skel-fade 1.4s ease-in-out infinite;
+      }
+      .skel-card .name { width: 40%; height: 12px; }
+      .skel-card .desc { width: 80%; height: 10px; }
+      @keyframes skel-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+      }
+      @keyframes skel-fade {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="__plasmo">
+      <div class="skel-popup" id="__popup_skeleton">
+        <div class="skel-header">
+          <div class="skel-brand">
+            <div class="skel-logo"></div>
+            <div class="skel-title-block">
+              <div class="skel-bar title"></div>
+              <div class="skel-bar subtitle"></div>
+            </div>
+          </div>
+          <div class="skel-icons">
+            <div class="skel-circle"></div>
+            <div class="skel-circle"></div>
+            <div class="skel-circle"></div>
+          </div>
+        </div>
+        <div class="skel-bar skel-search"></div>
+        <div class="skel-cards">
+          <div class="skel-card">
+            <div class="skel-bar name"></div>
+            <div class="skel-bar desc"></div>
+          </div>
+          <div class="skel-card">
+            <div class="skel-bar name"></div>
+            <div class="skel-bar desc"></div>
+          </div>
+          <div class="skel-card">
+            <div class="skel-bar name"></div>
+            <div class="skel-bar desc"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="./popup.tsx" type="module"></script>
+  </body>
+</html>
