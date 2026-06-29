@@ -11,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "~/components/ui/tooltip"
+import { Input } from "~/components/ui/input"
 import { useToast } from "~/hooks/use-toast"
 import { getAppSettings } from "~/lib/storage"
 import { useCombos } from "~/lib/useCombos"
@@ -28,8 +29,10 @@ import {
   LogIn,
   Moon,
   Pin,
+  Search,
   Settings,
-  Sun
+  Sun,
+  X
 } from "lucide-react"
 
 import type { AppSettings, LoginCombo } from "~/types"
@@ -54,6 +57,7 @@ function PopupIndex() {
   const [loginStatus, setLoginStatus] = useState<LoginStatus>("idle")
   const [activeId, setActiveId] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>("")
+  const [searchQuery, setSearchQuery] = useState("")
 
   useEffect(() => {
     let cancelled = false
@@ -107,6 +111,22 @@ function PopupIndex() {
       return bl - al
     })
   }, [combos])
+
+  const filteredCombos = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return sortedCombos
+    return sortedCombos.filter((c) => {
+      const cas = casMap.get(c.casId)
+      const acc = accMap.get(c.accountId)
+      const cb = cbMap.get(c.callbackId)
+      return (
+        c.name.toLowerCase().includes(q) ||
+        cas?.name.toLowerCase().includes(q) ||
+        acc?.username.toLowerCase().includes(q) ||
+        cb?.name.toLowerCase().includes(q)
+      )
+    })
+  }, [sortedCombos, searchQuery, casMap, accMap, cbMap])
 
   const handleComboLogin = async (combo: LoginCombo) => {
     if (loginStatus === "loading") return
@@ -352,7 +372,30 @@ function PopupIndex() {
             </div>
           </div>
 
-          {sortedCombos.length === 0 ? (
+          {combos.length > 0 && (
+            <div className="relative mb-2">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索组合名称 / CAS / 账号 / 回调"
+                className="h-8 pl-8 pr-8 text-xs"
+                data-testid="combo-search"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="清除搜索"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {filteredCombos.length === 0 ? (
             <Card className="border-border bg-muted/50 shadow-none">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
@@ -361,7 +404,9 @@ function PopupIndex() {
                   </div>
                   <div className="flex-1">
                     <p className="mb-1 text-sm font-medium text-foreground">
-                      还没有登录组合
+                      {combos.length === 0
+                        ? "还没有登录组合"
+                        : "没有匹配的组合"}
                     </p>
                     <p className="mb-3 text-xs text-muted-foreground">
                       先在选项页配好 CAS、账号、回调, 再把常用组合打包,
@@ -378,8 +423,8 @@ function PopupIndex() {
           ) : (
             <div
               data-testid="combos-list"
-              className="max-h-[360px] space-y-2 overflow-y-auto pr-1">
-              {sortedCombos.map((combo) => {
+              className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
+              {filteredCombos.map((combo) => {
                 const cas = casMap.get(combo.casId)
                 const acc = accMap.get(combo.accountId)
                 const cb = cbMap.get(combo.callbackId)
