@@ -10,6 +10,7 @@ import type {
 import "~/style.css"
 
 import {
+  Download,
   Globe,
   Link2,
   Moon,
@@ -18,6 +19,7 @@ import {
   Settings,
   Shield,
   Sun,
+  Upload,
   User
 } from "lucide-react"
 
@@ -39,6 +41,12 @@ import {
   SelectValue
 } from "~/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "~/components/ui/tooltip"
 import { Toaster } from "~/components/ui/toaster"
 import { useToast } from "~/hooks/use-toast"
 import { encrypt, exportKey, generateMasterKey, importKey } from "~/lib/crypto"
@@ -138,6 +146,62 @@ function OptionsIndex() {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
+  }
+
+  // 一键导出所有数据 (CAS / 回调 / 账号 / 组合)
+  const exportAll = () => {
+    downloadJson(
+      {
+        casConfigs: settings.casConfigs,
+        callbackConfigs: settings.callbackConfigs,
+        accounts: settings.accounts,
+        combos: combos,
+        exportedAt: new Date().toISOString(),
+        version: 1
+      },
+      `peaks-login-all-${new Date().toISOString().split("T")[0]}.json`
+    )
+    toast({
+      title: t("success"),
+      description: "已导出全部配置"
+    })
+  }
+
+  // 一键导入所有数据, 覆盖当前
+  const importAll = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) return
+    try {
+      const text = await file.text()
+      const data = JSON.parse(text)
+      if (typeof data !== "object" || data === null) {
+        throw new Error("Invalid configuration file")
+      }
+      const updated: AppSettings = {
+        casConfigs: Array.isArray(data.casConfigs) ? data.casConfigs : [],
+        callbackConfigs: Array.isArray(data.callbackConfigs)
+          ? data.callbackConfigs
+          : [],
+        accounts: Array.isArray(data.accounts) ? data.accounts : [],
+        combos: Array.isArray(data.combos) ? data.combos : []
+      }
+      await setAppSettings(updated)
+      setSettings(updated)
+      toast({
+        title: t("success"),
+        description: "已导入全部配置"
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t("error")
+      toast({
+        title: t("error"),
+        description: message,
+        variant: "destructive"
+      })
+    }
   }
   const handleAddCas = async (data: CasFormData) => {
     const config: CasConfig = {
@@ -482,44 +546,94 @@ function OptionsIndex() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Select
-              value={language}
-              onValueChange={(value: "en" | "zh") => setLanguage(value)}>
-              <SelectTrigger className="w-32">
-                <Globe className="mr-1 h-4 w-4" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="en">English</SelectItem>
-                <SelectItem value="zh">中文</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={theme}
-              onValueChange={(value: "light" | "dark" | "system") =>
-                setTheme(value)
-              }>
-              <SelectTrigger className="w-auto min-w-28 gap-1">
-                {resolvedTheme === "dark" ? (
-                  <Moon className="h-4 w-4 shrink-0" />
-                ) : (
-                  <Sun className="h-4 w-4 shrink-0" />
-                )}
-                <span className="whitespace-nowrap">
+          <div className="flex items-center gap-2">
+            <TooltipProvider>
+              <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setLanguage(language === "en" ? "zh" : "en")}
+                  aria-label="切换语言"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  <Globe className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>语言: {language === "en" ? "English" : "中文"}</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light"
+                    setTheme(next)
+                  }}
+                  aria-label="切换主题"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  {resolvedTheme === "dark" ? (
+                    <Moon className="h-4 w-4" />
+                  ) : (
+                    <Sun className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  主题:{" "}
                   {theme === "light"
                     ? t("lightTheme")
                     : theme === "dark"
                       ? t("darkTheme")
                       : t("systemTheme")}
-                </span>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="light">{t("lightTheme")}</SelectItem>
-                <SelectItem value="dark">{t("darkTheme")}</SelectItem>
-                <SelectItem value="system">{t("systemTheme")}</SelectItem>
-              </SelectContent>
-            </Select>
+                </p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={exportAll}
+                  aria-label="导出全部配置"
+                  data-testid="export-all-button"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  <Download className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>导出全部 (CAS / 回调 / 账号 / 组合)</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() =>
+                    document.getElementById("import-all-file")?.click()
+                  }
+                  aria-label="导入全部配置"
+                  data-testid="import-all-button"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  <Upload className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>导入全部 (覆盖当前)</p>
+              </TooltipContent>
+            </Tooltip>
+            <input
+              type="file"
+              accept=".json"
+              id="import-all-file"
+              onChange={importAll}
+              className="hidden"
+            />
+            </TooltipProvider>
           </div>
         </div>
 
