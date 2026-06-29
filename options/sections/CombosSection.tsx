@@ -265,9 +265,9 @@ export function CombosSection({ settings }: CombosSectionProps) {
     const tag = tagMap.get(effectiveTagId)
     if (!tag) return null
     return (
-      <span className="ml-1 inline-flex flex-wrap items-center gap-1">
+      <div className="flex items-center gap-1">
         <TagBadge tag={tag} />
-      </span>
+      </div>
     )
   }
 
@@ -543,10 +543,10 @@ export function CombosSection({ settings }: CombosSectionProps) {
                 <div
                   data-testid="combos-table-scroll"
                   className="mb-4 max-h-[60vh] overflow-x-auto overflow-y-auto rounded-md border border-border">
-                  <Table className="border-separate border-spacing-0">
+                  <Table className="min-w-[700px] border-separate border-spacing-0">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="sticky top-0 z-10 max-w-[200px] whitespace-nowrap bg-card">
+                        <TableHead className="sticky left-0 top-0 z-20 w-[200px] min-w-[200px] whitespace-nowrap bg-card">
                           名称 / 标签
                         </TableHead>
                         <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
@@ -558,7 +558,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
                         <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
                           回调
                         </TableHead>
-                        <TableHead className="sticky top-0 z-10 w-[80px] whitespace-nowrap bg-card text-right">
+                        <TableHead className="sticky right-0 top-0 z-20 w-[80px] min-w-[80px] whitespace-nowrap bg-card text-right">
                           操作
                         </TableHead>
                       </TableRow>
@@ -572,8 +572,8 @@ export function CombosSection({ settings }: CombosSectionProps) {
                           <TableRow
                             key={combo.id}
                             data-testid={`combos-row-${combo.id}`}>
-                            <TableCell className="max-w-[200px] font-medium">
-                              <div className="flex flex-col gap-1">
+                            <TableCell className="sticky left-0 z-10 w-[200px] min-w-[200px] whitespace-nowrap bg-card font-medium">
+                              <div className="flex flex-col gap-1 overflow-hidden">
                                 <div className="flex items-center gap-1">
                                   {combo.pinned && (
                                     <Pin
@@ -607,7 +607,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
                                 <span className="text-destructive">已删除</span>
                               )}
                             </TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="sticky right-0 z-10 w-[80px] min-w-[80px] whitespace-nowrap bg-card text-right">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button

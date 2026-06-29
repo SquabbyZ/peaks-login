@@ -12,6 +12,9 @@ export default defineConfig({
       thresholds: { lines: 95, functions: 95, statements: 95, branches: 90 }
     }
   },
+  esbuild: {
+    jsx: "automatic"
+  },
   resolve: {
     alias: { "~": path.resolve(__dirname, ".") }
   }

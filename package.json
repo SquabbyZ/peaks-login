@@ -1,7 +1,7 @@
 {
   "name": "peaks-login",
   "displayName": "Peaks Login",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "简化 CAS（Central Authentication Service）单点登录流程。通过自动化登录和 Token 注入机制，实现多账号管理和快速切换，提升开发和测试效率。",
   "author": "smallMark1912",
   "scripts": {
@@ -33,17 +33,23 @@
     "@ianvs/prettier-plugin-sort-imports": "4.1.1",
     "@tailwindcss/forms": "^0.5.11",
     "@tailwindcss/typography": "^0.5.19",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/chrome": "0.0.258",
     "@types/node": "20.11.5",
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
+    "@vitest/coverage-v8": "^2.1.9",
     "autoprefixer": "^10.4.27",
     "crypto-browserify": "^3.12.1",
+    "happy-dom": "^15.11.7",
     "postcss": "^8.5.8",
     "prettier": "^3.7.4",
     "prettier-plugin-tailwindcss": "^0.7.2",
     "tailwindcss": "3.4.17",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "vitest": "2.1.9"
   },
   "manifest": {
     "permissions": [
