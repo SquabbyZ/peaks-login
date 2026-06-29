@@ -6,10 +6,12 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  Search,
   Trash2,
-  Upload
+  Upload,
+  X
 } from "lucide-react"
-import React, { useState } from "react"
+import React, { useMemo, useState } from "react"
 
 import {
   AlertDialog,
@@ -37,6 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu"
+import { Input } from "~/components/ui/input"
 import {
   Table,
   TableBody,
@@ -85,6 +88,16 @@ export function CallbackSection({
   const [editing, setEditing] = useState<CallbackConfig | null>(null)
   const [form, setForm] = useState<CallbackFormData>(EMPTY_FORM)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredCallback = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return configs
+    return configs.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) || c.url.toLowerCase().includes(q)
+    )
+  }, [configs, searchQuery])
 
   const openEdit = (cb: CallbackConfig) => {
     setEditing(cb)
@@ -154,6 +167,28 @@ export function CallbackSection({
       </CardHeader>
       <CardContent>
         {configs.length > 0 && (
+          <div className="relative mb-2">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索..."
+              className="h-8 pl-8 pr-8 text-xs"
+              data-testid="callback-table-search"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="清除搜索"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+        {filteredCallback.length > 0 ? (
           <div
             data-testid="callback-table-scroll"
             className="mb-4 max-h-[60vh] overflow-x-auto overflow-y-auto rounded-md border border-border">
@@ -178,7 +213,7 @@ export function CallbackSection({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {configs.map((cb) => (
+                {filteredCallback.map((cb) => (
                   <TableRow key={cb.id}>
                     <TableCell className="max-w-[150px] truncate font-medium">
                       {cb.name}
@@ -258,7 +293,11 @@ export function CallbackSection({
               </TableBody>
             </Table>
           </div>
-        )}
+        ) : searchQuery ? (
+          <div className="py-6 text-center text-xs text-muted-foreground">
+            没有匹配的回调地址
+          </div>
+        ) : null}
       </CardContent>
       <CallbackDialogs
         addingOpen={addingOpen}

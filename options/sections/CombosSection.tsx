@@ -7,7 +7,9 @@ import {
   Pin,
   PinOff,
   Plus,
-  Trash2
+  Search,
+  Trash2,
+  X
 } from "lucide-react"
 import React, { useEffect, useMemo, useState } from "react"
 
@@ -97,6 +99,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
   const [draft, setDraft] = useState<ComboDraft>(EMPTY_DRAFT)
   const [formError, setFormError] = useState<string | null>(null)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const casList: CasConfig[] = settings.casConfigs ?? []
   const accList: AccountConfig[] = settings.accounts ?? []
@@ -220,6 +223,24 @@ export function CombosSection({ settings }: CombosSectionProps) {
       }),
     [combos]
   )
+
+  // 搜索过滤: 匹配组合名 / CAS 名 / 账号名 / 回调名
+  const filteredCombos = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return sortedCombos
+    return sortedCombos.filter((combo) => {
+      const cas = casMap.get(combo.casId)
+      const acc = accMap.get(combo.accountId)
+      const cb = cbMap.get(combo.callbackId)
+      return (
+        combo.name.toLowerCase().includes(q) ||
+        (cas?.name ?? "").toLowerCase().includes(q) ||
+        (acc?.name ?? "").toLowerCase().includes(q) ||
+        (acc?.username ?? "").toLowerCase().includes(q) ||
+        (cb?.name ?? "").toLowerCase().includes(q)
+      )
+    })
+  }, [sortedCombos, searchQuery, casMap, accMap, cbMap])
 
   return (
     <Card id="section-combos" data-testid="section-combos">
@@ -457,33 +478,55 @@ export function CombosSection({ settings }: CombosSectionProps) {
           </div>
         ) : sortedCombos.length > 0 ? (
           <>
-            {/* eslint-disable-next-line react/no-unknown-property */}
-            <style>{`[data-testid="combos-table-scroll"] > div { overflow: visible !important; }`}</style>
-            <div
-              data-testid="combos-table-scroll"
-              className="mb-4 max-h-[60vh] overflow-x-auto overflow-y-auto rounded-md border border-border">
-              <Table className="border-separate border-spacing-0">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="sticky top-0 z-10 max-w-[160px] whitespace-nowrap bg-card">
-                      名称
-                    </TableHead>
-                    <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
-                      CAS
-                    </TableHead>
-                    <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
-                      账号
-                    </TableHead>
-                    <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
-                      回调
-                    </TableHead>
-                    <TableHead className="sticky top-0 z-10 w-[80px] whitespace-nowrap bg-card text-right">
-                      操作
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {sortedCombos.map((combo) => {
+            <div className="relative mb-2">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="搜索..."
+                className="h-8 pl-8 pr-8 text-xs"
+                data-testid="combo-table-search"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="清除搜索"
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            {filteredCombos.length > 0 ? (
+              <>
+                {/* eslint-disable-next-line react/no-unknown-property */}
+                <style>{`[data-testid="combos-table-scroll"] > div { overflow: visible !important; }`}</style>
+                <div
+                  data-testid="combos-table-scroll"
+                  className="mb-4 max-h-[60vh] overflow-x-auto overflow-y-auto rounded-md border border-border">
+                  <Table className="border-separate border-spacing-0">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="sticky top-0 z-10 max-w-[160px] whitespace-nowrap bg-card">
+                          名称
+                        </TableHead>
+                        <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
+                          CAS
+                        </TableHead>
+                        <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
+                          账号
+                        </TableHead>
+                        <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
+                          回调
+                        </TableHead>
+                        <TableHead className="sticky top-0 z-10 w-[80px] whitespace-nowrap bg-card text-right">
+                          操作
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCombos.map((combo) => {
                     const cas = casMap.get(combo.casId)
                     const acc = accMap.get(combo.accountId)
                     const cb = cbMap.get(combo.callbackId)
@@ -597,9 +640,15 @@ export function CombosSection({ settings }: CombosSectionProps) {
                       </TableRow>
                     )
                   })}
-                </TableBody>
-              </Table>
-            </div>
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
+            ) : (
+              <div className="py-6 text-center text-xs text-muted-foreground">
+                没有匹配的组合
+              </div>
+            )}
           </>
         ) : (
           <div className="py-6 text-center text-xs text-muted-foreground">

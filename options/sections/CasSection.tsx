@@ -5,11 +5,13 @@ import {
   MoreHorizontal,
   Pencil,
   Plus,
+  Search,
   Server,
   Trash2,
-  Upload
+  Upload,
+  X
 } from "lucide-react"
-import React, { useState } from "react"
+import React, { useMemo, useState } from "react"
 
 import {
   AlertDialog,
@@ -37,6 +39,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "~/components/ui/dropdown-menu"
+import { Input } from "~/components/ui/input"
 import {
   Table,
   TableBody,
@@ -88,6 +91,16 @@ export function CasSection({
   const [editing, setEditing] = useState<CasConfig | null>(null)
   const [form, setForm] = useState<CasFormData>(EMPTY_FORM)
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredCas = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return configs
+    return configs.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) || c.url.toLowerCase().includes(q)
+    )
+  }, [configs, searchQuery])
 
   const openEdit = (cas: CasConfig) => {
     setEditing(cas)
@@ -158,6 +171,28 @@ export function CasSection({
       </CardHeader>
       <CardContent>
         {configs.length > 0 && (
+          <div className="relative mb-2">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索..."
+              className="h-8 pl-8 pr-8 text-xs"
+              data-testid="cas-table-search"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="清除搜索"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+        )}
+        {filteredCas.length > 0 ? (
           <div
             data-testid="cas-table-scroll"
             className="mb-4 max-h-[60vh] overflow-x-auto overflow-y-auto rounded-md border border-border">
@@ -185,7 +220,7 @@ export function CasSection({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {configs.map((cas) => (
+                {filteredCas.map((cas) => (
                   <TableRow key={cas.id}>
                     <TableCell className="max-w-[150px] truncate font-medium">
                       {cas.name}
@@ -268,7 +303,11 @@ export function CasSection({
               </TableBody>
             </Table>
           </div>
-        )}
+        ) : searchQuery ? (
+          <div className="py-6 text-center text-xs text-muted-foreground">
+            没有匹配的 CAS 地址
+          </div>
+        ) : null}
       </CardContent>
       <CasDialogs
         addingOpen={addingOpen}
