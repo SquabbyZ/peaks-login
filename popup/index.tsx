@@ -5,6 +5,12 @@ import icon from "~/assets/icon.png"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent } from "~/components/ui/card"
 import { Input } from "~/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger
+} from "~/components/ui/select"
 import { TagBadge } from "~/components/ui/tag-badge"
 import {
   Tooltip,
@@ -23,7 +29,6 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronRight,
-  Globe,
   Loader2,
   LogIn,
   Moon,
@@ -75,7 +80,7 @@ const ComboCard = memo(function ComboCard({
           {combo.pinned && (
             <Pin
               className="h-3.5 w-3.5 shrink-0 text-primary"
-              aria-label="已置顶"
+              aria-label={t("pinnedAria")}
             />
           )}
           <span className="truncate">{combo.name}</span>
@@ -85,7 +90,7 @@ const ComboCard = memo(function ComboCard({
             <TagBadge tag={tag} />
           ) : (
             <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-              未设置
+              {t("unconfigured")}
             </span>
           )}
         </div>
@@ -94,17 +99,20 @@ const ComboCard = memo(function ComboCard({
         {isLoading && (
           <Loader2
             className="h-4 w-4 animate-spin text-primary"
-            aria-label="登录中"
+            aria-label={t("loggingInAria")}
           />
         )}
         {isSuccess && (
           <CheckCircle2
             className="h-4 w-4 text-green-600 dark:text-green-400"
-            aria-label="成功"
+            aria-label={t("success")}
           />
         )}
         {isError && (
-          <AlertCircle className="h-4 w-4 text-destructive" aria-label="失败" />
+          <AlertCircle
+            className="h-4 w-4 text-destructive"
+            aria-label={t("failure")}
+          />
         )}
         {!isLoading && !isSuccess && !isError && (
           <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -352,22 +360,21 @@ function PopupIndex() {
                   </p>
                 </TooltipContent>
               </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setLanguage(language === "en" ? "zh" : "en")}
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                    <Globe className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {language === "en" ? "Switch to 中文" : "Switch to English"}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
+              <Select
+                value={language}
+                onValueChange={(value: "en" | "zh") => setLanguage(value)}>
+                <SelectTrigger
+                  className="h-8 w-8 border-0 bg-transparent p-0 shadow-none focus:ring-0"
+                  aria-label={t("language")}>
+                  <span className="text-lg leading-none">
+                    {language === "en" ? "🇺🇸" : "🇨🇳"}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">🇺🇸 English</SelectItem>
+                  <SelectItem value="zh">🇨🇳 中文</SelectItem>
+                </SelectContent>
+              </Select>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -426,7 +433,7 @@ function PopupIndex() {
                     type="text"
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="搜索组合名称 / 标签"
+                    placeholder={t("popupSearchPlaceholder")}
                     className="h-8 pl-8 pr-8 text-xs"
                     data-testid="combo-search"
                   />
@@ -434,7 +441,7 @@ function PopupIndex() {
                     <button
                       type="button"
                       onClick={() => setSearchInput("")}
-                      aria-label="清除搜索"
+                      aria-label={t("clearSearch")}
                       className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground">
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -452,17 +459,16 @@ function PopupIndex() {
                       <div className="flex-1">
                         <p className="mb-1 text-sm font-medium text-foreground">
                           {combos.length === 0
-                            ? "还没有登录组合"
-                            : "没有匹配的组合"}
+                            ? t("combosEmpty")
+                            : t("combosNoMatch")}
                         </p>
                         <p className="mb-3 text-xs text-muted-foreground">
-                          先在选项页配好 CAS、账号、回调, 再把常用组合打包,
-                          这里就能一键登录。
+                          {t("popupEmptyDescription")}
                         </p>
                         <Button
                           size="sm"
                           onClick={() => openOptionsTab("combos")}>
-                          去选项页配置
+                          {t("openSettings")}
                           <ChevronRight className="ml-1 h-4 w-4" />
                         </Button>
                       </div>
@@ -514,7 +520,7 @@ function PopupIndex() {
           {/* footer */}
           <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
             <p className="text-xs text-muted-foreground">
-              {combos.length} 个登录组合
+              {t("popupComboCount")(combos.length)}
             </p>
             <Button
               variant="link"

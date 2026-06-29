@@ -196,6 +196,14 @@ export interface Translations {
   tagUpdatedSuccess: string
   tagDeletedSuccess: string
   resetSuccess: (label: string) => string
+
+  // Popup-specific
+  loggingInAria: string
+  failure: string
+  unconfigured: string
+  popupComboCount: (count: number) => string
+  popupEmptyDescription: string
+  popupSearchPlaceholder: string
 }
 
 export const translations: Record<Language, Translations> = {
@@ -404,7 +412,15 @@ export const translations: Record<Language, Translations> = {
     tagCreatedSuccess: "Tag created",
     tagUpdatedSuccess: "Tag updated",
     tagDeletedSuccess: "Tag deleted",
-    resetSuccess: (label: string) => `All ${label} reset`
+    resetSuccess: (label: string) => `All ${label} reset`,
+
+    loggingInAria: "Logging in",
+    failure: "Failed",
+    unconfigured: "Not configured",
+    popupComboCount: (count) => `${count} login combo${count === 1 ? "" : "s"}`,
+    popupEmptyDescription:
+      "Configure CAS, accounts, and callbacks in the options page first, then bundle frequently-used combos for one-click login here.",
+    popupSearchPlaceholder: "Search combo name / tag"
   },
   zh: {
     appName: "Peaks Login",
@@ -606,6 +622,14 @@ export const translations: Record<Language, Translations> = {
     tagCreatedSuccess: "标签已创建",
     tagUpdatedSuccess: "标签已更新",
     tagDeletedSuccess: "标签已删除",
-    resetSuccess: (label: string) => `已重置${label}`
+    resetSuccess: (label: string) => `已重置${label}`,
+
+    loggingInAria: "登录中",
+    failure: "失败",
+    unconfigured: "未设置",
+    popupComboCount: (count) => `${count} 个登录组合`,
+    popupEmptyDescription:
+      "先在选项页配好 CAS、账号、回调, 再把常用组合打包, 这里就能一键登录。",
+    popupSearchPlaceholder: "搜索组合名称 / 标签"
   }
 }
