@@ -461,22 +461,32 @@ function PopupIndex() {
                         )}
                         <span className="truncate">{combo.name}</span>
                       </div>
-                      <p className="break-words text-xs leading-relaxed text-muted-foreground">
-                        <span className="font-medium text-foreground/70">
-                          CAS
-                        </span>{" "}
-                        {cas?.name ?? "已删除"}
-                        <span className="mx-1 text-muted-foreground/50">·</span>
-                        <span className="font-medium text-foreground/70">
-                          账号
-                        </span>{" "}
-                        {acc?.username ?? "已删除"}
-                        <span className="mx-1 text-muted-foreground/50">·</span>
-                        <span className="font-medium text-foreground/70">
-                          回调
-                        </span>{" "}
-                        {cb?.name ?? "已删除"}
-                      </p>
+                      <div className="space-y-0.5 text-xs text-muted-foreground">
+                        <div
+                          className="truncate"
+                          title={cas?.name ?? "已删除"}>
+                          <span className="font-medium text-foreground/70">
+                            CAS
+                          </span>{" "}
+                          {cas?.name ?? "已删除"}
+                        </div>
+                        <div
+                          className="truncate"
+                          title={acc?.username ?? "已删除"}>
+                          <span className="font-medium text-foreground/70">
+                            账号
+                          </span>{" "}
+                          {acc?.username ?? "已删除"}
+                        </div>
+                        <div
+                          className="truncate"
+                          title={cb?.name ?? "已删除"}>
+                          <span className="font-medium text-foreground/70">
+                            回调
+                          </span>{" "}
+                          {cb?.name ?? "已删除"}
+                        </div>
+                      </div>
                     </div>
                     <div className="ml-2 flex shrink-0 items-center">
                       {isLoading && (
