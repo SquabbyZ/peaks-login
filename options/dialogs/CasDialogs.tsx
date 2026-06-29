@@ -73,7 +73,7 @@ export function CasDialogs({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-5">
+            <div className="space-y-5">
               <div className="space-y-2.5">
                 <Label htmlFor="new-cas-username-field">
                   {t("usernameField")}
