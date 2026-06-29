@@ -94,8 +94,7 @@ export function CallbackSection({
     const q = searchQuery.trim().toLowerCase()
     if (!q) return configs
     return configs.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) || c.url.toLowerCase().includes(q)
+      (c) => c.name.toLowerCase().includes(q) || c.url.toLowerCase().includes(q)
     )
   }, [configs, searchQuery])
 

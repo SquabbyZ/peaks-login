@@ -527,119 +527,122 @@ export function CombosSection({ settings }: CombosSectionProps) {
                     </TableHeader>
                     <TableBody>
                       {filteredCombos.map((combo) => {
-                    const cas = casMap.get(combo.casId)
-                    const acc = accMap.get(combo.accountId)
-                    const cb = cbMap.get(combo.callbackId)
-                    return (
-                      <TableRow
-                        key={combo.id}
-                        data-testid={`combos-row-${combo.id}`}>
-                        <TableCell className="max-w-[160px] truncate font-medium">
-                          <div className="flex items-center gap-1">
-                            {combo.pinned && (
-                              <Pin
-                                className="h-3.5 w-3.5 shrink-0 text-primary"
-                                aria-label="已置顶"
-                              />
-                            )}
-                            <span className="truncate">{combo.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="max-w-[140px] truncate text-muted-foreground">
-                          {cas ? (
-                            cas.name
-                          ) : (
-                            <span className="text-destructive">已删除</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="max-w-[140px] truncate text-muted-foreground">
-                          {acc ? (
-                            acc.name
-                          ) : (
-                            <span className="text-destructive">已删除</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="max-w-[140px] truncate text-muted-foreground">
-                          {cb ? (
-                            cb.name
-                          ) : (
-                            <span className="text-destructive">已删除</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                data-testid={`combos-row-actions-${combo.id}`}>
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                onClick={() => togglePin(combo)}>
-                                {combo.pinned ? (
-                                  <PinOff className="mr-2 h-4 w-4" />
-                                ) : (
-                                  <Pin className="mr-2 h-4 w-4" />
+                        const cas = casMap.get(combo.casId)
+                        const acc = accMap.get(combo.accountId)
+                        const cb = cbMap.get(combo.callbackId)
+                        return (
+                          <TableRow
+                            key={combo.id}
+                            data-testid={`combos-row-${combo.id}`}>
+                            <TableCell className="max-w-[160px] truncate font-medium">
+                              <div className="flex items-center gap-1">
+                                {combo.pinned && (
+                                  <Pin
+                                    className="h-3.5 w-3.5 shrink-0 text-primary"
+                                    aria-label="已置顶"
+                                  />
                                 )}
-                                {combo.pinned ? "取消置顶" : "置顶"}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => handleCopy(combo)}>
-                                {copiedId === combo.id ? (
-                                  <Check className="mr-2 h-4 w-4 text-green-500" />
-                                ) : (
-                                  <Copy className="mr-2 h-4 w-4" />
-                                )}
-                                {copiedId === combo.id ? "已复制" : "复制"}
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => openEdit(combo)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                编辑
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <AlertDialog
-                                open={pendingDeleteId === combo.id}
-                                onOpenChange={(o) =>
-                                  !o && setPendingDeleteId(null)
-                                }>
-                                <DropdownMenuItem
-                                  className="text-destructive focus:text-destructive"
-                                  onSelect={(e) => {
-                                    e.preventDefault()
-                                    setPendingDeleteId(combo.id)
-                                  }}>
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  删除
-                                </DropdownMenuItem>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>
-                                      删除登录组合
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      确认要删除组合 "{combo.name}"
-                                      吗?此操作不可撤销。
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>取消</AlertDialogCancel>
-                                    <AlertDialogAction
-                                      onClick={confirmDelete}
-                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                <span className="truncate">{combo.name}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell className="max-w-[140px] truncate text-muted-foreground">
+                              {cas ? (
+                                cas.name
+                              ) : (
+                                <span className="text-destructive">已删除</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="max-w-[140px] truncate text-muted-foreground">
+                              {acc ? (
+                                acc.name
+                              ) : (
+                                <span className="text-destructive">已删除</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="max-w-[140px] truncate text-muted-foreground">
+                              {cb ? (
+                                cb.name
+                              ) : (
+                                <span className="text-destructive">已删除</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    data-testid={`combos-row-actions-${combo.id}`}>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => togglePin(combo)}>
+                                    {combo.pinned ? (
+                                      <PinOff className="mr-2 h-4 w-4" />
+                                    ) : (
+                                      <Pin className="mr-2 h-4 w-4" />
+                                    )}
+                                    {combo.pinned ? "取消置顶" : "置顶"}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleCopy(combo)}>
+                                    {copiedId === combo.id ? (
+                                      <Check className="mr-2 h-4 w-4 text-green-500" />
+                                    ) : (
+                                      <Copy className="mr-2 h-4 w-4" />
+                                    )}
+                                    {copiedId === combo.id ? "已复制" : "复制"}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => openEdit(combo)}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    编辑
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <AlertDialog
+                                    open={pendingDeleteId === combo.id}
+                                    onOpenChange={(o) =>
+                                      !o && setPendingDeleteId(null)
+                                    }>
+                                    <DropdownMenuItem
+                                      className="text-destructive focus:text-destructive"
+                                      onSelect={(e) => {
+                                        e.preventDefault()
+                                        setPendingDeleteId(combo.id)
+                                      }}>
+                                      <Trash2 className="mr-2 h-4 w-4" />
                                       删除
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
+                                    </DropdownMenuItem>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>
+                                          删除登录组合
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          确认要删除组合 "{combo.name}"
+                                          吗?此操作不可撤销。
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>
+                                          取消
+                                        </AlertDialogCancel>
+                                        <AlertDialogAction
+                                          onClick={confirmDelete}
+                                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                          删除
+                                        </AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
                     </TableBody>
                   </Table>
                 </div>

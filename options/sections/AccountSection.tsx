@@ -89,8 +89,7 @@ export function AccountSection({
     if (!q) return accounts
     return accounts.filter(
       (a) =>
-        a.name.toLowerCase().includes(q) ||
-        a.username.toLowerCase().includes(q)
+        a.name.toLowerCase().includes(q) || a.username.toLowerCase().includes(q)
     )
   }, [accounts, searchQuery])
 

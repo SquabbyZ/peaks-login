@@ -522,7 +522,10 @@ function OptionsIndex() {
               </Card>
             )}
 
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "config" | "combos")} className="w-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={(v) => setActiveTab(v as "config" | "combos")}
+              className="w-full">
               <TabsList>
                 <TabsTrigger value="config">
                   <Settings className="mr-2 h-4 w-4" />
