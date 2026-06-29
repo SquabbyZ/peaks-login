@@ -47,14 +47,14 @@ export function CasDialogs({
   return (
     <>
       <Dialog open={addingOpen} onOpenChange={onAddingOpenChange}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t("addCasAddress")}</DialogTitle>
             <DialogDescription>{t("casLoginDescription")}</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+          <div className="grid gap-5 py-6">
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-2.5">
                 <Label htmlFor="new-cas-name">{t("casName")}</Label>
                 <Input
                   id="new-cas-name"
@@ -63,7 +63,7 @@ export function CasDialogs({
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <Label htmlFor="new-cas-url">{t("casUrl")}</Label>
                 <Input
                   id="new-cas-url"
@@ -73,8 +73,8 @@ export function CasDialogs({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
+            <div className="grid grid-cols-3 gap-5">
+              <div className="space-y-2.5">
                 <Label htmlFor="new-cas-username-field">
                   {t("usernameField")}
                 </Label>
@@ -87,7 +87,7 @@ export function CasDialogs({
                   }
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <Label htmlFor="new-cas-password-field">
                   {t("passwordField")}
                 </Label>
@@ -100,7 +100,7 @@ export function CasDialogs({
                   }
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <Label htmlFor="new-cas-token-response-key">
                   {t("tokenResponseKey")}
                 </Label>
@@ -129,12 +129,12 @@ export function CasDialogs({
       </Dialog>
 
       <Dialog open={!!editing} onOpenChange={onEditingOpenChange}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t("editCasTitle")}</DialogTitle>
             <DialogDescription>{t("editCasDescription")}</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-5 py-6">
             <div className="grid gap-2">
               <Label htmlFor="edit-cas-name">{t("casName")}</Label>
               <Input
