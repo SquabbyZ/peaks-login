@@ -62,6 +62,13 @@ function OptionsIndex() {
     accounts: []
   })
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<"config" | "combos">(() => {
+    // 从 URL hash 读取初始 tab (e.g. popup 跳转 #combos)
+    if (typeof window !== "undefined" && window.location.hash === "#combos") {
+      return "combos"
+    }
+    return "config"
+  })
   const [masterKeyString, setMasterKeyString] = useState<string>("")
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const { combos } = useCombos()
@@ -515,7 +522,7 @@ function OptionsIndex() {
               </Card>
             )}
 
-            <Tabs defaultValue="config" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList>
                 <TabsTrigger value="config">
                   <Settings className="mr-2 h-4 w-4" />

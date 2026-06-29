@@ -4,6 +4,7 @@ import iconDark from "~/assets/icon-dark.png"
 import icon from "~/assets/icon.png"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent } from "~/components/ui/card"
+import { Input } from "~/components/ui/input"
 import { Toaster } from "~/components/ui/toaster"
 import {
   Tooltip,
@@ -11,7 +12,6 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "~/components/ui/tooltip"
-import { Input } from "~/components/ui/input"
 import { useToast } from "~/hooks/use-toast"
 import { getAppSettings } from "~/lib/storage"
 import { useCombos } from "~/lib/useCombos"
@@ -82,8 +82,14 @@ function PopupIndex() {
     }
   }, [])
 
-  const openOptions = () => {
-    chrome.runtime.openOptionsPage()
+  const openOptions = (tab?: "config" | "combos") => {
+    if (tab) {
+      // 通过 URL hash 传参, options 页读取后激活对应 tab
+      const url = chrome.runtime.getURL(`options.html#${tab}`)
+      chrome.tabs.create({ url })
+    } else {
+      chrome.runtime.openOptionsPage()
+    }
   }
 
   const casMap = useMemo(
@@ -412,7 +418,7 @@ function PopupIndex() {
                       先在选项页配好 CAS、账号、回调, 再把常用组合打包,
                       这里就能一键登录。
                     </p>
-                    <Button size="sm" onClick={openOptions}>
+                    <Button size="sm" onClick={() => openOptions("combos")}>
                       去选项页配置
                       <ChevronRight className="ml-1 h-4 w-4" />
                     </Button>
