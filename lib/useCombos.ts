@@ -10,6 +10,7 @@ export interface UseCombosResult {
   upsert: (combo: LoginCombo) => Promise<void>
   remove: (id: string) => Promise<void>
   touch: (id: string) => Promise<void>
+  clearAll: () => Promise<void>
   refresh: () => Promise<void>
 }
 

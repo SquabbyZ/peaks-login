@@ -26,6 +26,16 @@ import {
 
 import iconDark from "~/assets/icon-dark.png"
 import icon from "~/assets/icon.png"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "~/components/ui/alert-dialog"
 import { Button } from "~/components/ui/button"
 import {
   Card,
@@ -49,16 +59,6 @@ import {
   TooltipProvider,
   TooltipTrigger
 } from "~/components/ui/tooltip"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle
-} from "~/components/ui/alert-dialog"
 import { useToast } from "~/hooks/use-toast"
 import { encrypt, exportKey, generateMasterKey, importKey } from "~/lib/crypto"
 import {
@@ -111,7 +111,7 @@ function OptionsIndex() {
   const [masterKeyString, setMasterKeyString] = useState<string>("")
   const [copiedId, setCopiedId] = useState<string | null>(null)
   const [clearOpen, setClearOpen] = useState(false)
-  const { combos, remove: removeCombo } = useCombos()
+  const { combos } = useCombos()
 
   const loadSettings = useCallback(async () => {
     const loaded = await getAppSettings()
@@ -179,26 +179,38 @@ function OptionsIndex() {
     })
   }
 
-  // 一键清空当前 tab 的数据
+  // 一键清空当前 tab 的数据 (统一通过 setAppSettings 走, 跟其他 tab 一致)
   const clearActiveTab = async () => {
     const tab = activeTab
+    const updated: AppSettings = { ...settings }
+    let label = ""
     if (tab === "combos") {
-      for (const c of combos) {
-        await removeCombo(c.id)
-      }
-      toast({ title: t("success"), description: "已清空所有登录组合" })
-    } else {
-      const updated: AppSettings = { ...settings }
-      if (tab === "cas") updated.casConfigs = []
-      else if (tab === "callback") updated.callbackConfigs = []
-      else if (tab === "account") updated.accounts = []
-      await setAppSettings(updated)
-      setSettings(updated)
-      const label =
-        tab === "cas" ? "CAS 登录地址" : tab === "callback" ? "回调地址" : "账号"
-      toast({ title: t("success"), description: `已清空所有${label}` })
+      updated.combos = []
+      label = "登录组合"
+    } else if (tab === "cas") {
+      updated.casConfigs = []
+      label = "CAS 登录地址"
+    } else if (tab === "callback") {
+      updated.callbackConfigs = []
+      label = "回调地址"
+    } else if (tab === "account") {
+      updated.accounts = []
+      label = "账号"
     }
+    await setAppSettings(updated)
+    setSettings(updated)
+    toast({ title: t("success"), description: `已清空所有${label}` })
   }
+
+  // 当前 tab 的数据条数, 0 时隐藏清空按钮
+  const activeTabCount =
+    activeTab === "combos"
+      ? combos.length
+      : activeTab === "cas"
+        ? settings.casConfigs.length
+        : activeTab === "callback"
+          ? settings.callbackConfigs.length
+          : settings.accounts.length
 
   // 一键导入所有数据, 覆盖当前
   const importAll = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -713,6 +725,7 @@ function OptionsIndex() {
                     账号
                   </TabsTrigger>
                 </TabsList>
+                {activeTabCount > 0 && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -740,6 +753,7 @@ function OptionsIndex() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+                )}
               </div>
 
               <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
