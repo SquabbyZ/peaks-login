@@ -461,12 +461,21 @@ function PopupIndex() {
                         )}
                         <span className="truncate">{combo.name}</span>
                       </div>
-                      <p className="truncate text-xs text-muted-foreground">
-                        CAS: {cas?.name ?? "已删除"}
-                        {" · "}
-                        账号: {acc?.username ?? "已删除"}
-                        {" · "}
-                        回调: {cb?.name ?? "已删除"}
+                      <p className="break-words text-xs leading-relaxed text-muted-foreground">
+                        <span className="font-medium text-foreground/70">
+                          CAS
+                        </span>{" "}
+                        {cas?.name ?? "已删除"}
+                        <span className="mx-1 text-muted-foreground/50">·</span>
+                        <span className="font-medium text-foreground/70">
+                          账号
+                        </span>{" "}
+                        {acc?.username ?? "已删除"}
+                        <span className="mx-1 text-muted-foreground/50">·</span>
+                        <span className="font-medium text-foreground/70">
+                          回调
+                        </span>{" "}
+                        {cb?.name ?? "已删除"}
                       </p>
                     </div>
                     <div className="ml-2 flex shrink-0 items-center">
