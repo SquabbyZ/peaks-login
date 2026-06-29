@@ -62,12 +62,22 @@ function OptionsIndex() {
     accounts: []
   })
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<"config" | "combos">(() => {
+  const [activeTab, setActiveTab] = useState<
+    "combos" | "cas" | "callback" | "account"
+  >(() => {
     // 从 URL hash 读取初始 tab (e.g. popup 跳转 #combos)
-    if (typeof window !== "undefined" && window.location.hash === "#combos") {
-      return "combos"
+    if (typeof window !== "undefined" && window.location.hash) {
+      const hash = window.location.hash.replace("#", "")
+      if (
+        hash === "combos" ||
+        hash === "cas" ||
+        hash === "callback" ||
+        hash === "account"
+      ) {
+        return hash
+      }
     }
-    return "config"
+    return "combos"
   })
   const [masterKeyString, setMasterKeyString] = useState<string>("")
   const [copiedId, setCopiedId] = useState<string | null>(null)
@@ -524,16 +534,16 @@ function OptionsIndex() {
 
             <Tabs
               value={activeTab}
-              onValueChange={(v) => setActiveTab(v as "config" | "combos")}
+              onValueChange={(v) =>
+                setActiveTab(
+                  v as "combos" | "cas" | "callback" | "account"
+                )
+              }
               className="w-full">
               <TabsList>
-                <TabsTrigger value="config">
-                  <Settings className="mr-2 h-4 w-4" />
-                  配置
-                </TabsTrigger>
                 <TabsTrigger value="combos">
                   <Plus className="mr-2 h-4 w-4" />
-                  组合
+                  登录组合
                   {combos.length > 0 && (
                     <span
                       data-testid="combos-tab-badge"
@@ -542,8 +552,23 @@ function OptionsIndex() {
                     </span>
                   )}
                 </TabsTrigger>
+                <TabsTrigger value="cas">
+                  <Settings className="mr-2 h-4 w-4" />
+                  CAS 登录地址
+                </TabsTrigger>
+                <TabsTrigger value="callback">
+                  <Settings className="mr-2 h-4 w-4" />
+                  回调地址
+                </TabsTrigger>
+                <TabsTrigger value="account">
+                  <Settings className="mr-2 h-4 w-4" />
+                  账号
+                </TabsTrigger>
               </TabsList>
-              <TabsContent value="config" className="space-y-8">
+              <TabsContent value="combos">
+                <CombosSection settings={settings} />
+              </TabsContent>
+              <TabsContent value="cas">
                 <CasSection
                   configs={settings.casConfigs}
                   t={t}
@@ -555,6 +580,8 @@ function OptionsIndex() {
                   onImport={importCas}
                   copiedId={copiedId}
                 />
+              </TabsContent>
+              <TabsContent value="callback">
                 <CallbackSection
                   configs={settings.callbackConfigs}
                   t={t}
@@ -566,6 +593,8 @@ function OptionsIndex() {
                   onImport={importCallback}
                   copiedId={copiedId}
                 />
+              </TabsContent>
+              <TabsContent value="account">
                 <AccountSection
                   accounts={settings.accounts}
                   t={t}
@@ -576,9 +605,6 @@ function OptionsIndex() {
                   copiedId={copiedId}
                   masterKey={masterKeyString}
                 />
-              </TabsContent>
-              <TabsContent value="combos">
-                <CombosSection settings={settings} />
               </TabsContent>
             </Tabs>
           </main>
