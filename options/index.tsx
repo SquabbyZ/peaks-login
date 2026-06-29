@@ -546,35 +546,27 @@ function OptionsIndex() {
           </div>
           <div className="flex items-center gap-2">
             <TooltipProvider>
+              <Select
+                value={language}
+                onValueChange={(value: "en" | "zh") => setLanguage(value)}>
+                <SelectTrigger
+                  className="h-8 w-8 border-0 bg-transparent p-0 shadow-none focus:ring-0"
+                  aria-label="切换语言">
+                  <span className="text-lg leading-none">
+                    {language === "en" ? "🇺🇸" : "🇨🇳"}
+                  </span>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">🇺🇸 English</SelectItem>
+                  <SelectItem value="zh">🇨🇳 中文</SelectItem>
+                </SelectContent>
+              </Select>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setLanguage(language === "en" ? "zh" : "en")}
-                    aria-label="切换语言"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                    <Globe className="h-4 w-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>语言: {language === "en" ? "English" : "中文"}</p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      const next =
-                        theme === "light"
-                          ? "dark"
-                          : theme === "dark"
-                            ? "system"
-                            : "light"
-                      setTheme(next)
-                    }}
+                    onClick={() => setTheme(theme === "light" ? "dark" : "light")}
                     aria-label="切换主题"
                     className="h-8 w-8 text-muted-foreground hover:text-foreground">
                     {resolvedTheme === "dark" ? (
@@ -587,11 +579,7 @@ function OptionsIndex() {
                 <TooltipContent>
                   <p>
                     主题:{" "}
-                    {theme === "light"
-                      ? t("lightTheme")
-                      : theme === "dark"
-                        ? t("darkTheme")
-                        : t("systemTheme")}
+                    {theme === "light" ? t("lightTheme") : t("darkTheme")}
                   </p>
                 </TooltipContent>
               </Tooltip>
