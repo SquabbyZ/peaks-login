@@ -31,3 +31,13 @@ dist/
 
 # typescript
 .tsbuildinfo
+tsconfig.tsbuildinfo
+
+# peaks-cli workspace (work-tracking, ephemeral)
+.peaks/
+
+# claude code session state
+.claude/
+
+# playwright mcp temp files
+.playwright-mcp/

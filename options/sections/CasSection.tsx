@@ -1,0 +1,286 @@
+import {
+  Check,
+  Copy,
+  Download,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Server,
+  Trash2,
+  Upload
+} from "lucide-react"
+import React, { useState } from "react"
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger
+} from "~/components/ui/alert-dialog"
+import { Button } from "~/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from "~/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "~/components/ui/dropdown-menu"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "~/components/ui/table"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger
+} from "~/components/ui/tooltip"
+import { CasDialogs, type CasFormData } from "~/options/dialogs/CasDialogs"
+import type { CasConfig } from "~/types"
+
+interface CasSectionProps {
+  configs: CasConfig[]
+  t: (key: string) => string
+  onAdd: (data: CasFormData) => Promise<void> | void
+  onEdit: (id: string, data: CasFormData) => Promise<void> | void
+  onDelete: (id: string) => Promise<void> | void
+  onCopy: (config: CasConfig) => Promise<void> | void
+  onExport: () => void
+  onImport: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void> | void
+  copiedId: string | null
+}
+
+const EMPTY_FORM: CasFormData = {
+  name: "",
+  url: "",
+  usernameField: "email",
+  passwordField: "password",
+  tokenResponseKey: "token"
+}
+
+export function CasSection({
+  configs,
+  t,
+  onAdd,
+  onEdit,
+  onDelete,
+  onCopy,
+  onExport,
+  onImport,
+  copiedId
+}: CasSectionProps) {
+  const [addingOpen, setAddingOpen] = useState(false)
+  const [editing, setEditing] = useState<CasConfig | null>(null)
+  const [form, setForm] = useState<CasFormData>(EMPTY_FORM)
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
+
+  const openEdit = (cas: CasConfig) => {
+    setEditing(cas)
+    setForm({
+      name: cas.name,
+      url: cas.url,
+      usernameField: cas.usernameField || "email",
+      passwordField: cas.passwordField || "password",
+      tokenResponseKey: cas.tokenResponseKey || "token"
+    })
+  }
+
+  const handleAdd = async (data: CasFormData) => {
+    await onAdd(data)
+    setAddingOpen(false)
+  }
+
+  const handleSaveEdit = async () => {
+    if (!editing) return
+    await onEdit(editing.id, form)
+    setEditing(null)
+  }
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteId) return
+    await onDelete(pendingDeleteId)
+    setPendingDeleteId(null)
+  }
+
+  return (
+    <Card id="section-cas" data-testid="section-cas">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Server className="h-5 w-5 text-primary" />
+            <CardTitle>{t("casLoginAddresses")}</CardTitle>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => {
+                setForm(EMPTY_FORM)
+                setAddingOpen(true)
+              }}
+              size="sm">
+              <Plus className="mr-2 h-4 w-4" />
+              {t("addCasAddress")}
+            </Button>
+            <Button onClick={onExport} variant="outline" size="sm">
+              <Download className="mr-2 h-4 w-4" />
+              {t("exportConfig")}
+            </Button>
+            <div className="relative">
+              <input
+                type="file"
+                accept=".json"
+                onChange={onImport}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                id="import-cas-file"
+              />
+              <Button variant="outline" size="sm" className="cursor-pointer">
+                <Upload className="mr-2 h-4 w-4" />
+                {t("importConfig")}
+              </Button>
+            </div>
+          </div>
+        </div>
+        <CardDescription>{t("casLoginDescription")}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {configs.length > 0 && (
+          <div
+            data-testid="cas-table-scroll"
+            className="mb-4 max-h-[60vh] overflow-x-auto overflow-y-auto rounded-md border border-border">
+            <Table className="border-separate border-spacing-0">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="sticky top-0 z-10 max-w-[150px] whitespace-nowrap bg-card">
+                    {t("casName")}
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 max-w-[170px] whitespace-nowrap bg-card">
+                    {t("casUrl")}
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 max-w-[120px] whitespace-nowrap bg-card">
+                    {t("usernameField")}
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 max-w-[120px] whitespace-nowrap bg-card">
+                    {t("passwordField")}
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 max-w-[150px] whitespace-nowrap bg-card">
+                    {t("tokenResponseKey")}
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 w-[150px] whitespace-nowrap bg-card text-right">
+                    {t("actions")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {configs.map((cas) => (
+                  <TableRow key={cas.id}>
+                    <TableCell className="max-w-[150px] truncate font-medium">
+                      {cas.name}
+                    </TableCell>
+                    <TableCell className="max-w-[170px] truncate text-muted-foreground">
+                      {cas.url}
+                    </TableCell>
+                    <TableCell className="max-w-[120px] truncate">
+                      {cas.usernameField || "email"}
+                    </TableCell>
+                    <TableCell className="max-w-[120px] truncate">
+                      {cas.passwordField || "password"}
+                    </TableCell>
+                    <TableCell className="max-w-[150px] truncate">
+                      {cas.tokenResponseKey || "token"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEdit(cas)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            {t("edit")}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onCopy(cas)}>
+                            {copiedId === cas.id ? (
+                              <Check className="mr-2 h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="mr-2 h-4 w-4" />
+                            )}
+                            {t("copy")}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <AlertDialog
+                            open={pendingDeleteId === cas.id}
+                            onOpenChange={(o) =>
+                              !o && setPendingDeleteId(null)
+                            }>
+                            <AlertDialogTrigger asChild>
+                              <DropdownMenuItem
+                                className="text-destructive focus:text-destructive"
+                                onSelect={(e) => {
+                                  e.preventDefault()
+                                  setPendingDeleteId(cas.id)
+                                }}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                {t("delete")}
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>
+                                  {t("deleteCasTitle")}
+                                </AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  {t("deleteCasDescription")} "{cas.name}"
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>
+                                  {t("cancel")}
+                                </AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={confirmDelete}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                  {t("delete")}
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+      <CasDialogs
+        addingOpen={addingOpen}
+        onAddingOpenChange={(o) => !o && setAddingOpen(false)}
+        editing={editing}
+        onEditingOpenChange={(o) => !o && setEditing(null)}
+        form={form}
+        setForm={setForm}
+        onAdd={handleAdd}
+        onSaveEdit={handleSaveEdit}
+        t={t}
+      />
+    </Card>
+  )
+}

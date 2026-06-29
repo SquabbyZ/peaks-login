@@ -32,7 +32,21 @@ export interface AppSettings {
   casConfigs: CasConfig[]
   callbackConfigs: CallbackConfig[]
   accounts: AccountConfig[]
+  combos?: LoginCombo[]
   masterKey?: string
+}
+
+export interface LoginCombo {
+  id: string
+  name: string
+  casId: string
+  accountId: string
+  callbackId: string
+  tokenKeyMappings?: Record<string, string> // ${callbackId}:${tokenKey} -> casId
+  pinned?: boolean
+  lastUsedAt?: number
+  createdAt: number
+  updatedAt: number
 }
 
 export interface PopupState {

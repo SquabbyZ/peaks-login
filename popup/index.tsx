@@ -1,122 +1,129 @@
-import { useState, useEffect, useCallback } from "react"
-import type { AppSettings, PopupState } from "~/types"
-import "~/style.css"
+import { useEffect, useMemo, useState } from "react"
+
+import iconDark from "~/assets/icon-dark.png"
+import icon from "~/assets/icon.png"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent } from "~/components/ui/card"
-import { NativeSelect, NativeSelectOption } from "~/components/ui/native-select"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "~/components/ui/accordion"
-import { getAppSettings, setPopupState, getPopupState } from "~/lib/storage"
-import { useTranslation } from "~/lib/useTranslation"
+import { Toaster } from "~/components/ui/toaster"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from "~/components/ui/tooltip"
+import { useToast } from "~/hooks/use-toast"
+import { getAppSettings } from "~/lib/storage"
+import { useCombos } from "~/lib/useCombos"
 import { useTheme } from "~/lib/useTheme"
-import { Server, User, Link2, Loader2, Settings, CheckCircle2, AlertCircle, ChevronRight, Key, Moon, Sun } from "lucide-react"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip"
-import icon from "~/assets/icon.png"
-import iconDark from "~/assets/icon-dark.png"
+import { useTranslation } from "~/lib/useTranslation"
+
+import "~/style.css"
+
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronRight,
+  Globe,
+  Loader2,
+  LogIn,
+  Moon,
+  Pin,
+  Settings,
+  Sun
+} from "lucide-react"
+
+import type { AppSettings, LoginCombo } from "~/types"
 
 type LoginStatus = "idle" | "loading" | "success" | "error"
 
 function PopupIndex() {
-  const { t } = useTranslation()
+  const { t, language, setLanguage } = useTranslation()
   const { resolvedTheme, toggleTheme } = useTheme()
-  const currentIcon = resolvedTheme === "dark" ? iconDark: icon
-  const buttonCurrentIcon = resolvedTheme === "dark" ? icon: iconDark
+  const { toast } = useToast()
+  const currentIcon = resolvedTheme === "dark" ? iconDark : icon
+  const buttonCurrentIcon = resolvedTheme === "dark" ? icon : iconDark
+
+  const { combos, loading: combosLoading, touch } = useCombos()
+
   const [settings, setSettings] = useState<AppSettings>({
     casConfigs: [],
     callbackConfigs: [],
-    accounts: [],
+    accounts: []
   })
-  const [popupState, setLocalPopupState] = useState<PopupState>({
-    selectedCasId: null,
-    selectedAccountId: null,
-    selectedCallbackId: null,
-    tokenKeyMappings: {},
-  })
-  const [loading, setLoading] = useState(true)
+  const [settingsLoading, setSettingsLoading] = useState(true)
   const [loginStatus, setLoginStatus] = useState<LoginStatus>("idle")
+  const [activeId, setActiveId] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>("")
-  const [validationErrors, setValidationErrors] = useState<{
-    cas?: boolean
-    account?: boolean
-    callback?: boolean
-  }>({})
-
-  const loadData = useCallback(async () => {
-    try {
-      const [loadedSettings, loadedPopupState] = await Promise.all([
-        getAppSettings(),
-        getPopupState(),
-      ])
-      setSettings(loadedSettings)
-      setLocalPopupState(loadedPopupState)
-      setLoading(false)
-    } catch (err) {
-      console.error("Failed to load data:", err)
-      const message = err instanceof Error ? err.message : "Unknown error"
-      setErrorMessage(message)
-      setLoading(false)
-    }
-  }, [])
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
-
-  const handleCasChange = async (value: string) => {
-    const newState = { ...popupState, selectedCasId: value }
-    setLocalPopupState(newState)
-    setValidationErrors(prev => ({ ...prev, cas: false }))
-    await setPopupState(newState)
-  }
-
-  const handleAccountChange = async (value: string) => {
-    const newState = { ...popupState, selectedAccountId: value }
-    setLocalPopupState(newState)
-    setValidationErrors(prev => ({ ...prev, account: false }))
-    await setPopupState(newState)
-  }
-
-  const handleCallbackChange = async (value: string) => {
-    const newState = { ...popupState, selectedCallbackId: value }
-    setLocalPopupState(newState)
-    setValidationErrors(prev => ({ ...prev, callback: false }))
-    await setPopupState(newState)
-  }
-
-  const handleTokenKeyMappingChange = async (callbackId: string, tokenKey: string, casId: string) => {
-    const mappingKey = `${callbackId}:${tokenKey}`
-    const newMappings = { ...popupState.tokenKeyMappings, [mappingKey]: casId }
-    const newState = { ...popupState, tokenKeyMappings: newMappings }
-    setLocalPopupState(newState)
-    await setPopupState(newState)
-  }
+    let cancelled = false
+    const load = async () => {
+      try {
+        const loaded = await getAppSettings()
+        if (!cancelled) {
+          setSettings(loaded)
+          setSettingsLoading(false)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message = err instanceof Error ? err.message : "Unknown error"
+          setErrorMessage(message)
+          setSettingsLoading(false)
+        }
+      }
+    }
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const openOptions = () => {
     chrome.runtime.openOptionsPage()
   }
 
-  const handleLogin = async () => {
-    // 校验所有必填项
-    const errors = {
-      cas: !popupState.selectedCasId,
-      account: !popupState.selectedAccountId,
-      callback: !popupState.selectedCallbackId,
-    }
-    setValidationErrors(errors)
-    
-    if (errors.cas || errors.account || errors.callback) {
-      return
-    }
+  const casMap = useMemo(
+    () => new Map(settings.casConfigs.map((c) => [c.id, c])),
+    [settings.casConfigs]
+  )
+  const accMap = useMemo(
+    () => new Map(settings.accounts.map((a) => [a.id, a])),
+    [settings.accounts]
+  )
+  const cbMap = useMemo(
+    () => new Map(settings.callbackConfigs.map((c) => [c.id, c])),
+    [settings.callbackConfigs]
+  )
 
-    const casConfig = settings.casConfigs.find((c) => c.id === popupState.selectedCasId)
-    const accountConfig = settings.accounts.find((a) => a.id === popupState.selectedAccountId)
-    const callbackConfig = settings.callbackConfigs.find((c) => c.id === popupState.selectedCallbackId)
+  // 排序: 置顶在前, 然后按最近使用倒序, 没有 lastUsedAt 的排最后
+  const sortedCombos = useMemo(() => {
+    return [...combos].sort((a, b) => {
+      const ap = a.pinned ?? false
+      const bp = b.pinned ?? false
+      if (ap !== bp) return ap ? -1 : 1
+      const al = a.lastUsedAt ?? 0
+      const bl = b.lastUsedAt ?? 0
+      if (al === bl) return b.updatedAt - a.updatedAt
+      return bl - al
+    })
+  }, [combos])
+
+  const handleComboLogin = async (combo: LoginCombo) => {
+    if (loginStatus === "loading") return
+
+    const casConfig = casMap.get(combo.casId)
+    const accountConfig = accMap.get(combo.accountId)
+    const callbackConfig = cbMap.get(combo.callbackId)
 
     if (!casConfig || !accountConfig || !callbackConfig) {
-      setErrorMessage(t("invalidConfiguration"))
+      const msg = t("invalidConfiguration")
+      setErrorMessage(msg)
       setLoginStatus("error")
+      toast({ title: t("error"), description: msg, variant: "destructive" })
       return
     }
 
+    setActiveId(combo.id)
     setLoginStatus("loading")
     setErrorMessage("")
 
@@ -126,8 +133,7 @@ function PopupIndex() {
       if (callbackConfig.tokenKeys && callbackConfig.tokenKeys.length > 0) {
         for (const tokenKey of callbackConfig.tokenKeys) {
           const mappingKey = `${callbackConfig.id}:${tokenKey}`
-          // 如果没有映射，默认使用当前选中的 CAS
-          const casId = popupState.tokenKeyMappings?.[mappingKey] || casConfig.id
+          const casId = combo.tokenKeyMappings?.[mappingKey] || casConfig.id
           currentTokenMappings[tokenKey] = casId
         }
       }
@@ -140,32 +146,52 @@ function PopupIndex() {
           accountId: accountConfig.id,
           callbackId: callbackConfig.id,
           callbackUrl: callbackConfig.url,
-          tokenKeyMappings: currentTokenMappings, // tokenKey -> casId 的映射
-        },
+          tokenKeyMappings: currentTokenMappings
+        }
       })
 
-      if (response.success) {
+      if (response?.success) {
         setLoginStatus("success")
+        // 标记最近使用
+        void touch(combo.id)
+        toast({
+          title: t("success"),
+          description: t("loginSuccessful"),
+          variant: "success"
+        })
+        setTimeout(() => {
+          setLoginStatus("idle")
+          setActiveId(null)
+        }, 2000)
       } else {
-        setErrorMessage(response.error || t("error"))
+        const msg = response?.error || t("error")
+        setErrorMessage(msg)
         setLoginStatus("error")
+        toast({ title: t("error"), description: msg, variant: "destructive" })
+        setTimeout(() => {
+          setLoginStatus("idle")
+          setActiveId(null)
+        }, 2000)
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : t("error")
       setErrorMessage(message)
       setLoginStatus("error")
+      toast({
+        title: t("error"),
+        description: message,
+        variant: "destructive"
+      })
+      setTimeout(() => {
+        setLoginStatus("idle")
+        setActiveId(null)
+      }, 2000)
     }
   }
 
-  const selectedCas = settings.casConfigs.find((c) => c.id === popupState.selectedCasId)
-  const selectedAccount = settings.accounts.find((a) => a.id === popupState.selectedAccountId)
-  const selectedCallback = settings.callbackConfigs.find((c) => c.id === popupState.selectedCallbackId)
-
-  const canLogin = selectedCas && selectedAccount && selectedCallback && loginStatus !== "loading"
-
-  if (loading) {
+  if (combosLoading || settingsLoading) {
     return (
-      <div className="w-[340px] h-[420px] bg-background flex items-center justify-center">
+      <div className="flex h-[420px] w-[340px] items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <span className="text-sm text-muted-foreground">{t("loading")}</span>
@@ -174,283 +200,275 @@ function PopupIndex() {
     )
   }
 
-  if (settings.casConfigs.length === 0 || settings.accounts.length === 0 || settings.callbackConfigs.length === 0) {
-    return (
-      <div className="w-[340px] bg-background">
-        <div className="p-5">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <img src={currentIcon} alt="Peaks Login" className="h-5 w-5" />
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-foreground">{t("appName")}</h1>
-              <p className="text-xs text-muted-foreground">{t("appDescription")}</p>
-            </div>
-          </div>
+  const hasUnderlyingConfigs =
+    settings.casConfigs.length > 0 &&
+    settings.accounts.length > 0 &&
+    settings.callbackConfigs.length > 0
 
-          <Card className="border-border bg-muted/50 shadow-none">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <div className="p-1.5 bg-muted rounded-md mt-0.5">
-                  <AlertCircle className="h-4 w-4 text-muted-foreground" />
+  // 当没有底层配置 (CAS/账号/回调) 时, 引导去 options
+  if (!hasUnderlyingConfigs) {
+    return (
+      <TooltipProvider>
+        <div className="w-[340px] bg-background">
+          <div className="p-5">
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary/10 p-2">
+                  <img
+                    src={currentIcon}
+                    alt="Peaks Login"
+                    className="h-5 w-5"
+                  />
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground mb-1">{t("configurationRequired")}</p>
-                  <p className="text-xs text-muted-foreground mb-3">{t("configurationRequiredDescription")}</p>
-                  <Button size="sm" onClick={openOptions}>
-                    {t("openSettings")}
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
+                <div>
+                  <h1 className="text-lg font-semibold text-foreground">
+                    {t("appName")}
+                  </h1>
+                  <p className="text-xs text-muted-foreground">
+                    {t("appDescription")}
+                  </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  {resolvedTheme === "dark" ? (
+                    <Sun className="h-4 w-4" />
+                  ) : (
+                    <Moon className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={openOptions}
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <Card className="border-border bg-muted/50 shadow-none">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 rounded-md bg-muted p-1.5">
+                    <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="mb-1 text-sm font-medium text-foreground">
+                      {t("configurationRequired")}
+                    </p>
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      {t("configurationRequiredDescription")}
+                    </p>
+                    <Button size="sm" onClick={openOptions}>
+                      {t("openSettings")}
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
+      </TooltipProvider>
     )
   }
 
   return (
     <TooltipProvider>
-    <div className="w-[340px] bg-background">
-      <div className="p-5">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <img src={currentIcon} alt="Peaks Login" className="h-5 w-5" />
+      <div className="w-[340px] bg-background">
+        <div className="p-5">
+          <div className="mb-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-primary/10 p-2">
+                <img src={currentIcon} alt="Peaks Login" className="h-5 w-5" />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-foreground">
+                  {t("appName")}
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  {t("appDescription")}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-lg font-semibold text-foreground">{t("appName")}</h1>
-              <p className="text-xs text-muted-foreground">{t("appDescription")}</p>
+            <div className="flex items-center gap-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={toggleTheme}
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                    {resolvedTheme === "dark" ? (
+                      <Sun className="h-4 w-4" />
+                    ) : (
+                      <Moon className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {resolvedTheme === "dark"
+                      ? t("lightTheme")
+                      : t("darkTheme")}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setLanguage(language === "en" ? "zh" : "en")}
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                    <Globe className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {language === "en" ? "Switch to 中文" : "Switch to English"}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={openOptions}
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                    <Settings className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t("openSettings")}</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           </div>
-          <div className="flex items-center gap-1">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={toggleTheme} 
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-            >
-              {resolvedTheme === "dark" ? (
-                <Sun className="h-4 w-4" />
-              ) : (
-                <Moon className="h-4 w-4" />
-              )}
-            </Button>
-            <Button variant="ghost" size="icon" onClick={openOptions} className="h-8 w-8 text-muted-foreground hover:text-foreground">
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
 
-        <Accordion type="multiple" defaultValue={["cas", "account", "callback"]} className="space-y-2">
-          <AccordionItem value="cas" className="border rounded-lg px-3">
-            <AccordionTrigger className="py-2 hover:no-underline">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Server className="h-4 w-4 text-primary" />
-                <span>{t("casLoginAddresses")}</span>
-                {selectedCas && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedCas.name}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{selectedCas.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-3 pt-0 space-y-1">
-              <NativeSelect 
-                value={popupState.selectedCasId || ""} 
-                onChange={(e) => handleCasChange(e.target.value)}
-                placeholder={t("selectCasAddress")}
-                className={`${validationErrors.cas ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
-              >
-                {settings.casConfigs.map((cas) => (
-                  <NativeSelectOption key={cas.id} value={cas.id}>
-                    {cas.name}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-              {validationErrors.cas && (
-                <p className="text-xs text-destructive">{t("pleaseSelectCas")}</p>
-              )}
-              {selectedCas && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <p className="text-xs text-muted-foreground truncate text-left w-full">{selectedCas.url}</p>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{selectedCas.url}</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="account" className="border rounded-lg px-3">
-            <AccordionTrigger className="py-2 hover:no-underline">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <User className="h-4 w-4 text-primary" />
-                <span>{t("accounts")}</span>
-                {selectedAccount && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedAccount.name}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{selectedAccount.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-3 pt-0 space-y-1">
-              <NativeSelect 
-                value={popupState.selectedAccountId || ""} 
-                onChange={(e) => handleAccountChange(e.target.value)}
-                placeholder={t("selectAccount")}
-                className={`${validationErrors.account ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
-              >
-                {settings.accounts.map((account) => (
-                  <NativeSelectOption key={account.id} value={account.id}>
-                    {account.name} ({account.username})
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-              {validationErrors.account && (
-                <p className="text-xs text-destructive">{t("pleaseSelectAccount")}</p>
-              )}
-            </AccordionContent>
-          </AccordionItem>
-
-          <AccordionItem value="callback" className="border rounded-lg px-3">
-            <AccordionTrigger className="py-2 hover:no-underline">
-              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                <Link2 className="h-4 w-4 text-primary" />
-                <span>{t("callbackAddresses")}</span>
-                {selectedCallback && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="text-xs font-normal text-muted-foreground truncate max-w-[120px]">- {selectedCallback.name}</span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{selectedCallback.name}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                )}
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="pb-3 pt-0 space-y-1">
-              <NativeSelect 
-                value={popupState.selectedCallbackId || ""} 
-                onChange={(e) => handleCallbackChange(e.target.value)}
-                placeholder={t("selectCallbackAddress")}
-                className={`${validationErrors.callback ? 'border-destructive' : 'border-border hover:border-primary/50'} transition-colors`}
-              >
-                {settings.callbackConfigs.map((callback) => (
-                  <NativeSelectOption key={callback.id} value={callback.id}>
-                    {callback.name}
-                  </NativeSelectOption>
-                ))}
-              </NativeSelect>
-              {validationErrors.callback && (
-                <p className="text-xs text-destructive">{t("pleaseSelectCallback")}</p>
-              )}
-              {selectedCallback && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <p className="text-xs text-muted-foreground truncate text-left w-full">{selectedCallback.url}</p>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>{selectedCallback.url}</p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </AccordionContent>
-          </AccordionItem>
-
-          {selectedCallback && selectedCallback.tokenKeys && selectedCallback.tokenKeys.length > 0 && (
-            <AccordionItem value="tokenMapping" className="border rounded-lg px-3">
-              <AccordionTrigger className="py-2 hover:no-underline">
-                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-                  <Key className="h-4 w-4 text-primary" />
-                  <span>{t("tokenKeyMapping")}</span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="pb-3 pt-0 space-y-3">
-                {selectedCallback.tokenKeys.map((tokenKey) => (
-                  <div key={tokenKey} className="space-y-1">
-                    <p className="text-xs text-muted-foreground">{tokenKey}</p>
-                    <NativeSelect 
-                      value={popupState.tokenKeyMappings?.[`${selectedCallback.id}:${tokenKey}`] || ""} 
-                      onChange={(e) => handleTokenKeyMappingChange(selectedCallback.id, tokenKey, e.target.value)}
-                      placeholder={t("selectTokenSource")}
-                      className="border-border hover:border-primary/50 transition-colors h-9"
-                    >
-                      {settings.casConfigs.map((cas) => (
-                        <NativeSelectOption key={cas.id} value={cas.id}>
-                          {cas.name} ({cas.tokenResponseKey || "token"})
-                        </NativeSelectOption>
-                      ))}
-                    </NativeSelect>
+          {sortedCombos.length === 0 ? (
+            <Card className="border-border bg-muted/50 shadow-none">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 rounded-md bg-muted p-1.5">
+                    <LogIn className="h-4 w-4 text-muted-foreground" />
                   </div>
-                ))}
-              </AccordionContent>
-            </AccordionItem>
+                  <div className="flex-1">
+                    <p className="mb-1 text-sm font-medium text-foreground">
+                      还没有登录组合
+                    </p>
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      先在选项页配好 CAS、账号、回调, 再把常用组合打包,
+                      这里就能一键登录。
+                    </p>
+                    <Button size="sm" onClick={openOptions}>
+                      去选项页配置
+                      <ChevronRight className="ml-1 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2" data-testid="combos-list">
+              {sortedCombos.map((combo) => {
+                const cas = casMap.get(combo.casId)
+                const acc = accMap.get(combo.accountId)
+                const cb = cbMap.get(combo.callbackId)
+                const isActive = activeId === combo.id
+                const isLoading = isActive && loginStatus === "loading"
+                const isSuccess = isActive && loginStatus === "success"
+                const isError = isActive && loginStatus === "error"
+                const disabled = loginStatus === "loading" && !isActive
+                return (
+                  <Button
+                    key={combo.id}
+                    data-testid={`combo-button-${combo.id}`}
+                    variant="outline"
+                    onClick={() => handleComboLogin(combo)}
+                    disabled={disabled}
+                    className={`group h-auto w-full justify-between whitespace-normal rounded-lg border-border px-3 py-2.5 text-left transition-all ${
+                      isActive
+                        ? "border-primary/60 bg-primary/5"
+                        : "hover:border-primary/50 hover:bg-accent/40"
+                    }`}>
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                        {combo.pinned && (
+                          <Pin
+                            className="h-3.5 w-3.5 shrink-0 text-primary"
+                            aria-label="已置顶"
+                          />
+                        )}
+                        <span className="truncate">{combo.name}</span>
+                      </div>
+                      <p className="truncate text-xs text-muted-foreground">
+                        CAS: {cas?.name ?? "已删除"}
+                        {" · "}
+                        账号: {acc?.username ?? "已删除"}
+                        {" · "}
+                        回调: {cb?.name ?? "已删除"}
+                      </p>
+                    </div>
+                    <div className="ml-2 flex shrink-0 items-center">
+                      {isLoading && (
+                        <Loader2
+                          className="h-4 w-4 animate-spin text-primary"
+                          aria-label="登录中"
+                        />
+                      )}
+                      {isSuccess && (
+                        <CheckCircle2
+                          className="h-4 w-4 text-green-600 dark:text-green-400"
+                          aria-label="成功"
+                        />
+                      )}
+                      {isError && (
+                        <AlertCircle
+                          className="h-4 w-4 text-destructive"
+                          aria-label="失败"
+                        />
+                      )}
+                      {!isLoading && !isSuccess && !isError && (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                      )}
+                    </div>
+                  </Button>
+                )
+              })}
+            </div>
           )}
-        </Accordion>
 
-        <div className="mt-4 space-y-3">
-          {loginStatus === "error" && (
-            <Card className="border-destructive/50 bg-destructive/10 shadow-none">
-              <CardContent className="p-3 flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
+          {errorMessage && loginStatus === "error" && (
+            <Card className="mt-3 border-destructive/50 bg-destructive/10 shadow-none">
+              <CardContent className="flex items-center gap-2 p-3">
+                <AlertCircle className="h-4 w-4 shrink-0 text-destructive" />
                 <p className="text-sm text-destructive">{errorMessage}</p>
               </CardContent>
             </Card>
           )}
 
-          {loginStatus === "success" && (
-            <Card className="border-primary/50 bg-primary/10 shadow-none">
-              <CardContent className="p-3 flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                <p className="text-sm text-primary">{t("loginSuccessful")}</p>
-              </CardContent>
-            </Card>
-          )}
-
-          <Button
-            className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 shadow-sm hover:shadow-md"
-            onClick={handleLogin}
-            disabled={!canLogin}
-          >
-            {loginStatus === "loading" ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {t("loggingIn")}
-              </>
-            ) : (
-              <>
-                <img src={buttonCurrentIcon} alt="" className="h-4 w-4 mr-2" />
-                {t("login")}
-              </>
-            )}
-          </Button>
+          <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
+            <p className="text-xs text-muted-foreground">
+              {combos.length} 个登录组合
+            </p>
+            <Button
+              variant="link"
+              size="sm"
+              onClick={openOptions}
+              className="h-auto p-0 text-xs text-primary">
+              {t("settings")}
+            </Button>
+          </div>
         </div>
-
-        <div className="mt-5 pt-4 border-t border-border flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            {settings.casConfigs.length} CAS · {settings.accounts.length} {t("accounts")} · {settings.callbackConfigs.length} {t("callbacks")}
-          </p>
-          <Button variant="link" size="sm" onClick={openOptions} className="h-auto p-0 text-xs text-primary">
-            {t("settings")}
-          </Button>
-        </div>
+        <Toaster />
       </div>
-    </div>
     </TooltipProvider>
   )
 }

@@ -1,16 +1,16 @@
-import type { AppSettings, PopupState } from "~/types"
 import type { Language } from "~/lib/i18n/translations"
+import type { AppSettings, LoginCombo, PopupState } from "~/types"
 
 const DEFAULT_SETTINGS: AppSettings = {
   casConfigs: [],
   callbackConfigs: [],
-  accounts: [],
+  accounts: []
 }
 
 const DEFAULT_POPUP_STATE: PopupState = {
   selectedCasId: null,
   selectedAccountId: null,
-  selectedCallbackId: null,
+  selectedCallbackId: null
 }
 
 const DEFAULT_LANGUAGE: Language = "en"
@@ -22,6 +22,16 @@ export async function getAppSettings(): Promise<AppSettings> {
 
 export async function setAppSettings(settings: AppSettings): Promise<void> {
   await chrome.storage.local.set({ appSettings: settings })
+}
+
+export async function getCombos(): Promise<LoginCombo[]> {
+  const settings = await getAppSettings()
+  return settings.combos ?? []
+}
+
+export async function setCombos(combos: LoginCombo[]): Promise<void> {
+  const settings = await getAppSettings()
+  await setAppSettings({ ...settings, combos })
 }
 
 export async function getPopupState(): Promise<PopupState> {
