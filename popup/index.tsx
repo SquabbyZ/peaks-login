@@ -376,7 +376,9 @@ function PopupIndex() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-2" data-testid="combos-list">
+            <div
+              data-testid="combos-list"
+              className="max-h-[360px] space-y-2 overflow-y-auto pr-1">
               {sortedCombos.map((combo) => {
                 const cas = casMap.get(combo.casId)
                 const acc = accMap.get(combo.accountId)
