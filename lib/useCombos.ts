@@ -94,5 +94,19 @@ export function useCombos(): UseCombosResult {
     [combos]
   )
 
-  return { combos, loading, error, upsert, remove, touch, refresh }
+  const clearAll = useCallback(async () => {
+    setLocal([])
+    await persist([])
+  }, [])
+
+  return {
+    combos,
+    loading,
+    error,
+    upsert,
+    remove,
+    touch,
+    clearAll,
+    refresh
+  }
 }
