@@ -121,6 +121,81 @@ export interface Translations {
   no: string
   quickNavigation: string
   jumpToSection: string
+
+  // Combos section
+  combos: string
+  combosDescription: (count: number) => string
+  combosRequiredFirstConfig: string
+  newCombo: string
+  editCombo: string
+  comboName: string
+  comboNamePlaceholder: string
+  comboNameRequired: string
+  comboRequiredFields: string
+  comboTag: string
+  comboCas: string
+  comboAccount: string
+  comboCallback: string
+  comboCasPlaceholder: string
+  comboAccountPlaceholder: string
+  comboCallbackPlaceholder: string
+  comboTokenKeyMapping: string
+  comboTokenKeyMappingCount: (count: number) => string
+  comboSelectCallbackFirst: string
+  comboNoTokenKeys: string
+  comboSelectTokenSource: string
+  comboTokenKeyDefaultHint: string
+  comboSearchPlaceholder: string
+  clearSearch: string
+  pinnedAria: string
+  configDeleted: string
+  pin: string
+  unpin: string
+  deleteComboTitle: string
+  deleteComboDescription: (name: string) => string
+  combosNoMatch: string
+  combosEmpty: string
+
+  // Tags section
+  tagManagement: string
+  tagManagementDescription: (count: number) => string
+  newTag: string
+  editTag: string
+  tagName: string
+  tagNamePlaceholder: string
+  tagNameRequired: string
+  tagNameTooLong: string
+  tagColor: string
+  tagPreview: string
+  tagPreviewLabel: string
+  deleteTagTitle: string
+  deleteTagDescription: (name: string) => string
+  tagEmpty: string
+
+  copied: string
+
+  // All-config export/import buttons
+  exportAllConfig: string
+  importAllConfig: string
+  exportAllDescription: string
+  importAllDescription: string
+  exportAllSuccess: string
+  importAllSuccess: string
+  clearTab: string
+  clear: string
+  clearConfirmTitle: string
+  clearConfirmDescriptionPrefix: string
+  clearConfirmDescriptionSuffix: string
+  clearConfirmCombos: string
+  clearConfirmCas: string
+  clearConfirmCallback: string
+  clearConfirmTags: string
+  clearConfirmAccounts: string
+  clearConfirmAction: string
+  tagCreatedSuccess: string
+  tagUpdatedSuccess: string
+  tagDeletedSuccess: string
+  resetSuccess: (label: string) => string
 }
 
 export const translations: Record<Language, Translations> = {
@@ -250,7 +325,86 @@ export const translations: Record<Language, Translations> = {
     yes: "YES",
     no: "NO",
     quickNavigation: "Quick Nav",
-    jumpToSection: "Jump to section"
+    jumpToSection: "Jump to section",
+
+    // Combos
+    combos: "Login Combos",
+    combosDescription: (count) =>
+      `Bundle a CAS addr. + account + callback into a named preset. One-click login from popup. ${count} combo${count === 1 ? "" : "s"} currently.`,
+    combosRequiredFirstConfig:
+      "Need at least 1 entry in each of 'CAS Addr.', 'Accounts', 'Callbacks' before creating a combo.",
+    newCombo: "New Combo",
+    editCombo: "Edit Combo",
+    comboName: "Name",
+    comboNamePlaceholder: "e.g. Dev / Prod / Test",
+    comboNameRequired: "Please enter a combo name",
+    comboRequiredFields: "Please select CAS / Account / Callback",
+    comboTag: "Tag",
+    comboCas: "CAS",
+    comboAccount: "Account",
+    comboCallback: "Callback",
+    comboCasPlaceholder: "Select CAS",
+    comboAccountPlaceholder: "Select account",
+    comboCallbackPlaceholder: "Select callback",
+    comboTokenKeyMapping: "Token Key Mapping",
+    comboTokenKeyMappingCount: (count) => `(${count})`,
+    comboSelectCallbackFirst: "Select a callback first",
+    comboNoTokenKeys: "This callback has no tokenKey",
+    comboSelectTokenSource: "Select CAS source",
+    comboTokenKeyDefaultHint:
+      "When not configured, the CAS selected above is used",
+    comboSearchPlaceholder: "Search...",
+    clearSearch: "Clear search",
+    pinnedAria: "Pinned",
+    configDeleted: "Deleted",
+    pin: "Pin",
+    unpin: "Unpin",
+    deleteComboTitle: "Delete Login Combo",
+    deleteComboDescription: (name) =>
+      `Confirm delete combo "${name}"? This cannot be undone.`,
+    combosNoMatch: "No matching combos",
+    combosEmpty: 'No combos yet. Click "New Combo" at top-right to start.',
+
+    // Tags
+    tagManagement: "Tag Management",
+    tagManagementDescription: (count) => `Currently ${count} tags.`,
+    newTag: "New Tag",
+    editTag: "Edit Tag",
+    tagName: "Name",
+    tagNamePlaceholder: "e.g. Prod / Test / Personal",
+    tagNameRequired: "Please enter a tag name",
+    tagNameTooLong: "Tag name cannot exceed 16 characters",
+    tagColor: "Color",
+    tagPreview: "Preview",
+    tagPreviewLabel: "Tag preview",
+    deleteTagTitle: "Delete Tag",
+    deleteTagDescription: (name) =>
+      `Confirm delete tag "${name}"? This cannot be undone.`,
+    tagEmpty: 'No tags yet. Click "New Tag" at top-right to start.',
+
+    copied: "Copied",
+
+    exportAllConfig: "Export All Config",
+    importAllConfig: "Import All Config",
+    exportAllDescription: "Export all (CAS / Callbacks / Accounts / Combos)",
+    importAllDescription: "Import all (overwrite current)",
+    exportAllSuccess: "All config exported",
+    importAllSuccess: "All config imported",
+    clearTab: "Clear current tab",
+    clear: "Clear ",
+    clearConfirmTitle: "Confirm Clear?",
+    clearConfirmDescriptionPrefix: "This will permanently delete ",
+    clearConfirmDescriptionSuffix: ". This cannot be undone.",
+    clearConfirmCombos: "all login combos",
+    clearConfirmCas: "all CAS addrs.",
+    clearConfirmCallback: "all callback addrs.",
+    clearConfirmTags: "all tags",
+    clearConfirmAccounts: "all accounts",
+    clearConfirmAction: "Confirm Clear",
+    tagCreatedSuccess: "Tag created",
+    tagUpdatedSuccess: "Tag updated",
+    tagDeletedSuccess: "Tag deleted",
+    resetSuccess: (label: string) => `All ${label} reset`
   },
   zh: {
     appName: "Peaks Login",
@@ -374,6 +528,84 @@ export const translations: Record<Language, Translations> = {
     yes: "是",
     no: "否",
     quickNavigation: "快速导航",
-    jumpToSection: "跳转到指定区域"
+    jumpToSection: "跳转到指定区域",
+
+    // Combos
+    combos: "登录组合",
+    combosDescription: (count) =>
+      `把 CAS + 账号 + 回调地址打成一个命名预设，popup 里一键登录。当前 ${count} 个。`,
+    combosRequiredFirstConfig:
+      '需要先在"CAS 登录地址"、"账号"、"回调地址"三个 section 中各至少配 1 项才能新建组合。',
+    newCombo: "新建组合",
+    editCombo: "编辑组合",
+    comboName: "名称",
+    comboNamePlaceholder: "如:开发 / 生产 / 测试",
+    comboNameRequired: "请输入组合名称",
+    comboRequiredFields: "请选择 CAS / 账号 / 回调",
+    comboTag: "标签",
+    comboCas: "CAS",
+    comboAccount: "账号",
+    comboCallback: "回调",
+    comboCasPlaceholder: "选择 CAS",
+    comboAccountPlaceholder: "选择账号",
+    comboCallbackPlaceholder: "选择回调",
+    comboTokenKeyMapping: "Token Key 映射",
+    comboTokenKeyMappingCount: (count) => `(${count} 个)`,
+    comboSelectCallbackFirst: "先选择回调地址",
+    comboNoTokenKeys: "该回调地址没有 tokenKey",
+    comboSelectTokenSource: "选择 CAS 来源",
+    comboTokenKeyDefaultHint: "未配置时默认用上方选中的 CAS",
+    comboSearchPlaceholder: "搜索...",
+    clearSearch: "清除搜索",
+    pinnedAria: "已置顶",
+    configDeleted: "已删除",
+    pin: "置顶",
+    unpin: "取消置顶",
+    deleteComboTitle: "删除登录组合",
+    deleteComboDescription: (name) =>
+      `确认要删除组合 "${name}" 吗?此操作不可撤销。`,
+    combosNoMatch: "没有匹配的组合",
+    combosEmpty: '还没有组合。点右上角"新建组合"开始。',
+
+    // Tags
+    tagManagement: "标签管理",
+    tagManagementDescription: (count) => `当前 ${count} 个标签。`,
+    newTag: "新建标签",
+    editTag: "编辑标签",
+    tagName: "名称",
+    tagNamePlaceholder: "如:生产 / 测试 / 个人",
+    tagNameRequired: "请输入标签名称",
+    tagNameTooLong: "标签名称不能超过 16 个字符",
+    tagColor: "颜色",
+    tagPreview: "预览",
+    tagPreviewLabel: "标签预览",
+    deleteTagTitle: "删除标签",
+    deleteTagDescription: (name) =>
+      `确认要删除标签 "${name}" 吗?此操作不可撤销。`,
+    tagEmpty: '还没有标签。点右上角"新建标签"开始。',
+
+    copied: "已复制",
+
+    exportAllConfig: "导出全部配置",
+    importAllConfig: "导入全部配置",
+    exportAllDescription: "导出全部 (CAS / 回调 / 账号 / 组合)",
+    importAllDescription: "导入全部 (覆盖当前)",
+    exportAllSuccess: "已导出全部配置",
+    importAllSuccess: "已导入全部配置",
+    clearTab: "清空当前 tab",
+    clear: "清空",
+    clearConfirmTitle: "确认清空?",
+    clearConfirmDescriptionPrefix: "将永久删除",
+    clearConfirmDescriptionSuffix: "。 此操作不可撤销。",
+    clearConfirmCombos: "所有登录组合",
+    clearConfirmCas: "所有 CAS 登录地址",
+    clearConfirmCallback: "所有回调地址",
+    clearConfirmTags: "所有标签",
+    clearConfirmAccounts: "所有账号",
+    clearConfirmAction: "确认清空",
+    tagCreatedSuccess: "标签已创建",
+    tagUpdatedSuccess: "标签已更新",
+    tagDeletedSuccess: "标签已删除",
+    resetSuccess: (label: string) => `已重置${label}`
   }
 }

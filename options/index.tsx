@@ -215,7 +215,7 @@ function OptionsIndex() {
     )
     toast({
       title: t("success"),
-      description: "已导出全部配置"
+      description: t("exportAllSuccess")
     })
   }
 
@@ -226,23 +226,23 @@ function OptionsIndex() {
     let label = ""
     if (tab === "combos") {
       updated.combos = []
-      label = "登录组合"
+      label = t("combos")
     } else if (tab === "cas") {
       updated.casConfigs = []
-      label = "CAS 登录地址"
+      label = t("casLoginAddresses")
     } else if (tab === "callback") {
       updated.callbackConfigs = []
-      label = "回调地址"
+      label = t("callbackAddresses")
     } else if (tab === "account") {
       updated.accounts = []
-      label = "账号"
+      label = t("accounts")
     } else if (tab === "tags") {
       updated.tags = buildDefaultTags()
-      label = "标签"
+      label = t("tagManagement")
     }
     await setAppSettings(updated)
     setSettings(updated)
-    toast({ title: t("success"), description: `已重置${label}` })
+    toast({ title: t("success"), description: t("resetSuccess")(label) })
   }
 
   // 当前 tab 的数据条数, 0 时隐藏清空按钮
@@ -280,7 +280,7 @@ function OptionsIndex() {
       setSettings(updated)
       toast({
         title: t("success"),
-        description: "已导入全部配置"
+        description: t("importAllSuccess")
       })
     } catch (error) {
       const message = error instanceof Error ? error.message : t("error")
@@ -633,7 +633,7 @@ function OptionsIndex() {
     setSettings(updated)
     toast({
       title: t("success"),
-      description: "标签已创建",
+      description: t("tagCreatedSuccess"),
       variant: "success"
     })
   }
@@ -655,7 +655,7 @@ function OptionsIndex() {
     setSettings(updated)
     toast({
       title: t("success"),
-      description: "标签已更新",
+      description: t("tagUpdatedSuccess"),
       variant: "success"
     })
   }
@@ -668,7 +668,7 @@ function OptionsIndex() {
     setSettings(updated)
     toast({
       title: t("success"),
-      description: "标签已删除",
+      description: t("tagDeletedSuccess"),
       variant: "success"
     })
   }
@@ -703,7 +703,7 @@ function OptionsIndex() {
                 onValueChange={(value: "en" | "zh") => setLanguage(value)}>
                 <SelectTrigger
                   className="h-8 w-8 border-0 bg-transparent p-0 shadow-none focus:ring-0"
-                  aria-label="切换语言">
+                  aria-label={t("language")}>
                   <span className="text-lg leading-none">
                     {language === "en" ? "🇺🇸" : "🇨🇳"}
                   </span>
@@ -721,7 +721,7 @@ function OptionsIndex() {
                     onClick={() =>
                       setTheme(theme === "light" ? "dark" : "light")
                     }
-                    aria-label="切换主题"
+                    aria-label={t("theme")}
                     className="h-8 w-8 text-muted-foreground hover:text-foreground">
                     {resolvedTheme === "dark" ? (
                       <Moon className="h-4 w-4" />
@@ -742,14 +742,14 @@ function OptionsIndex() {
                     variant="ghost"
                     size="icon"
                     onClick={exportAll}
-                    aria-label="导出全部配置"
+                    aria-label={t("exportAllConfig")}
                     data-testid="export-all-button"
                     className="h-8 w-8 text-muted-foreground hover:text-foreground">
                     <Download className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>导出全部 (CAS / 回调 / 账号 / 组合)</p>
+                  <p>{t("exportAllDescription")}</p>
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
@@ -760,14 +760,14 @@ function OptionsIndex() {
                     onClick={() =>
                       document.getElementById("import-all-file")?.click()
                     }
-                    aria-label="导入全部配置"
+                    aria-label={t("importAllConfig")}
                     data-testid="import-all-button"
                     className="h-8 w-8 text-muted-foreground hover:text-foreground">
                     <Upload className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>导入全部 (覆盖当前)</p>
+                  <p>{t("importAllDescription")}</p>
                 </TooltipContent>
               </Tooltip>
               <input
@@ -812,7 +812,7 @@ function OptionsIndex() {
                 <TabsList>
                   <TabsTrigger value="combos">
                     <Plus className="mr-2 h-4 w-4" />
-                    登录组合
+                    {t("combos")}
                     {combos.length > 0 && (
                       <span
                         data-testid="combos-tab-badge"
@@ -823,7 +823,7 @@ function OptionsIndex() {
                   </TabsTrigger>
                   <TabsTrigger value="cas">
                     <Server className="mr-2 h-4 w-4" />
-                    CAS 登录地址
+                    {t("casLoginAddresses")}
                     {settings.casConfigs.length > 0 && (
                       <span
                         data-testid="cas-tab-badge"
@@ -834,7 +834,7 @@ function OptionsIndex() {
                   </TabsTrigger>
                   <TabsTrigger value="callback">
                     <Link2 className="mr-2 h-4 w-4" />
-                    回调地址
+                    {t("callbackAddresses")}
                     {settings.callbackConfigs.length > 0 && (
                       <span
                         data-testid="callback-tab-badge"
@@ -845,7 +845,7 @@ function OptionsIndex() {
                   </TabsTrigger>
                   <TabsTrigger value="account">
                     <User className="mr-2 h-4 w-4" />
-                    账号
+                    {t("accounts")}
                     {settings.accounts.length > 0 && (
                       <span
                         data-testid="account-tab-badge"
@@ -856,7 +856,7 @@ function OptionsIndex() {
                   </TabsTrigger>
                   <TabsTrigger value="tags">
                     <TagIcon className="mr-2 h-4 w-4" />
-                    标签管理
+                    {t("tagManagement")}
                     {(settings.tags ?? []).length > 0 && (
                       <span
                         data-testid="tags-tab-badge"
@@ -875,23 +875,23 @@ function OptionsIndex() {
                           size="icon"
                           onClick={() => setClearOpen(true)}
                           data-testid="clear-tab-button"
-                          aria-label="清空当前 tab"
+                          aria-label={t("clearTab")}
                           className="h-8 w-8 text-muted-foreground hover:text-destructive">
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>
-                          清空
+                          {t("clear")}
                           {activeTab === "combos"
-                            ? "登录组合"
+                            ? t("combos")
                             : activeTab === "cas"
-                              ? "CAS 登录地址"
+                              ? t("casLoginAddresses")
                               : activeTab === "callback"
-                                ? "回调地址"
+                                ? t("callbackAddresses")
                                 : activeTab === "tags"
-                                  ? "标签"
-                                  : "账号"}
+                                  ? t("tagManagement")
+                                  : t("accounts")}
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -902,30 +902,32 @@ function OptionsIndex() {
               <AlertDialog open={clearOpen} onOpenChange={setClearOpen}>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>确认清空?</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      {t("clearConfirmTitle")}
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                      将永久删除
+                      {t("clearConfirmDescriptionPrefix")}
                       {activeTab === "combos"
-                        ? "所有登录组合"
+                        ? t("clearConfirmCombos")
                         : activeTab === "cas"
-                          ? "所有 CAS 登录地址"
+                          ? t("clearConfirmCas")
                           : activeTab === "callback"
-                            ? "所有回调地址"
+                            ? t("clearConfirmCallback")
                             : activeTab === "tags"
-                              ? "所有标签"
-                              : "所有账号"}
-                      。 此操作不可撤销。
+                              ? t("clearConfirmTags")
+                              : t("clearConfirmAccounts")}
+                      {t("clearConfirmDescriptionSuffix")}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>取消</AlertDialogCancel>
+                    <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                     <AlertDialogAction
                       onClick={() => {
                         void clearActiveTab()
                         setClearOpen(false)
                       }}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                      确认清空
+                      {t("clearConfirmAction")}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

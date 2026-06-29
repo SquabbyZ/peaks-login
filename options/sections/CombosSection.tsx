@@ -65,6 +65,7 @@ import { TagBadge } from "~/components/ui/tag-badge"
 import { TagSingleSelect } from "~/components/ui/tag-picker"
 import { createTimestamp, generateId } from "~/lib/storage"
 import { useCombos } from "~/lib/useCombos"
+import { useTranslation } from "~/lib/useTranslation"
 import type {
   AccountConfig,
   AppSettings,
@@ -96,6 +97,7 @@ const EMPTY_DRAFT: ComboDraft = {
 }
 
 export function CombosSection({ settings }: CombosSectionProps) {
+  const { t } = useTranslation()
   const { combos, loading, error, upsert, remove } = useCombos()
   const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -165,11 +167,11 @@ export function CombosSection({ settings }: CombosSectionProps) {
   const saveForm = async () => {
     const name = draft.name.trim()
     if (!name) {
-      setFormError("请输入组合名称")
+      setFormError(t("comboNameRequired"))
       return
     }
     if (!draft.casId || !draft.accountId || !draft.callbackId) {
-      setFormError("请选择 CAS / 账号 / 回调")
+      setFormError(t("comboRequiredFields"))
       return
     }
     const now = createTimestamp()
@@ -195,7 +197,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
     const now = createTimestamp()
     const next: LoginCombo = {
       id: generateId(),
-      name: `${combo.name} (副本)`,
+      name: `${combo.name} (${t("copy")})`,
       tagId: combo.tagId ?? combo.tagIds?.[0],
       casId: combo.casId,
       accountId: combo.accountId,
@@ -277,7 +279,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Plus className="h-5 w-5 text-primary" />
-            <CardTitle>登录组合</CardTitle>
+            <CardTitle>{t("combos")}</CardTitle>
           </div>
           <Button
             onClick={openCreate}
@@ -285,19 +287,17 @@ export function CombosSection({ settings }: CombosSectionProps) {
             size="sm"
             data-testid="combos-new-button">
             <Plus className="mr-2 h-4 w-4" />
-            新建组合
+            {t("newCombo")}
           </Button>
         </div>
         <CardDescription>
-          把 CAS + 账号 + 回调地址打成一个命名预设, popup 里一键登录。当前{" "}
-          {combos.length} 个。
+          {t("combosDescription")(combos.length)}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {!ready && (
           <div className="rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
-            需要先在"CAS 登录地址"、"账号"、"回调地址"三个 section 中各至少配 1
-            项才能新建组合。
+            {t("combosRequiredFirstConfig")}
           </div>
         )}
 
@@ -307,30 +307,30 @@ export function CombosSection({ settings }: CombosSectionProps) {
             className="space-y-3 rounded-md border border-border bg-muted/30 p-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium">
-                {editingId ? "编辑组合" : "新建组合"}
+                {editingId ? t("editCombo") : t("newCombo")}
               </h4>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={cancelForm}
                 data-testid="combos-form-cancel">
-                取消
+                {t("cancel")}
               </Button>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1.5 md:col-span-2">
-                <Label htmlFor="combo-name">名称</Label>
+                <Label htmlFor="combo-name">{t("comboName")}</Label>
                 <Input
                   id="combo-name"
                   data-testid="combo-name"
                   maxLength={32}
-                  placeholder="如:开发 / 生产 / 测试"
+                  placeholder={t("comboNamePlaceholder")}
                   value={draft.name}
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                 />
               </div>
               <div className="space-y-1.5 md:col-span-2">
-                <Label>标签</Label>
+                <Label>{t("comboTag")}</Label>
                 <TagSingleSelect
                   tags={tagList}
                   value={draft.tagId}
@@ -339,12 +339,12 @@ export function CombosSection({ settings }: CombosSectionProps) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>CAS</Label>
+                <Label>{t("comboCas")}</Label>
                 <Select
                   value={draft.casId || undefined}
                   onValueChange={(v) => setDraft({ ...draft, casId: v })}>
                   <SelectTrigger data-testid="combo-cas">
-                    <SelectValue placeholder="选择 CAS" />
+                    <SelectValue placeholder={t("comboCasPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {casList.map((c) => (
@@ -356,12 +356,12 @@ export function CombosSection({ settings }: CombosSectionProps) {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>账号</Label>
+                <Label>{t("comboAccount")}</Label>
                 <Select
                   value={draft.accountId || undefined}
                   onValueChange={(v) => setDraft({ ...draft, accountId: v })}>
                   <SelectTrigger data-testid="combo-account">
-                    <SelectValue placeholder="选择账号" />
+                    <SelectValue placeholder={t("comboAccountPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {accList.map((a) => (
@@ -373,12 +373,12 @@ export function CombosSection({ settings }: CombosSectionProps) {
                 </Select>
               </div>
               <div className="space-y-1.5 md:col-span-2">
-                <Label>回调</Label>
+                <Label>{t("comboCallback")}</Label>
                 <Select
                   value={draft.callbackId || undefined}
                   onValueChange={(v) => setDraft({ ...draft, callbackId: v })}>
                   <SelectTrigger data-testid="combo-callback">
-                    <SelectValue placeholder="选择回调" />
+                    <SelectValue placeholder={t("comboCallbackPlaceholder")} />
                   </SelectTrigger>
                   <SelectContent>
                     {cbList.map((c) => (
@@ -400,25 +400,24 @@ export function CombosSection({ settings }: CombosSectionProps) {
                       className="text-sm font-medium hover:no-underline">
                       <div className="flex items-center gap-2">
                         <Key className="h-3.5 w-3.5" />
-                        <span>Token Key 映射</span>
-                        {draft.callbackId &&
-                        cbList.find((c) => c.id === draft.callbackId)?.tokenKeys
-                          ?.length ? (
-                          <span className="text-xs text-muted-foreground">
-                            (
-                            {
-                              cbList.find((c) => c.id === draft.callbackId)
-                                ?.tokenKeys?.length
-                            }{" "}
-                            个)
-                          </span>
-                        ) : null}
+                        <span>{t("comboTokenKeyMapping")}</span>
+                        {(() => {
+                          const n = draft.callbackId
+                            ? (cbList.find((c) => c.id === draft.callbackId)
+                                ?.tokenKeys?.length ?? 0)
+                            : 0
+                          return n > 0 ? (
+                            <span className="text-xs text-muted-foreground">
+                              {t("comboTokenKeyMappingCount")(n)}
+                            </span>
+                          ) : null
+                        })()}
                       </div>
                     </AccordionTrigger>
                     <AccordionContent>
                       {!draft.callbackId ? (
                         <p className="py-2 text-xs text-muted-foreground">
-                          先选择回调地址
+                          {t("comboSelectCallbackFirst")}
                         </p>
                       ) : (
                         (() => {
@@ -429,7 +428,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
                           if (tokenKeys.length === 0) {
                             return (
                               <p className="py-2 text-xs text-muted-foreground">
-                                该回调地址没有 tokenKey
+                                {t("comboNoTokenKeys")}
                               </p>
                             )
                           }
@@ -461,7 +460,11 @@ export function CombosSection({ settings }: CombosSectionProps) {
                                       <SelectTrigger
                                         data-testid={`combo-token-map-${tokenKey}`}
                                         className="flex-1">
-                                        <SelectValue placeholder="选择 CAS 来源" />
+                                        <SelectValue
+                                          placeholder={t(
+                                            "comboSelectTokenSource"
+                                          )}
+                                        />
                                       </SelectTrigger>
                                       <SelectContent>
                                         {casList.map((c) => (
@@ -475,7 +478,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
                                 )
                               })}
                               <p className="pt-1 text-xs text-muted-foreground">
-                                未配置时默认用上方选中的 CAS
+                                {t("comboTokenKeyDefaultHint")}
                               </p>
                             </div>
                           )
@@ -498,7 +501,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
                 onClick={saveForm}
                 data-testid="combos-form-save"
                 size="sm">
-                保存
+                {t("save")}
               </Button>
             </div>
           </div>
@@ -512,7 +515,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
 
         {loading ? (
           <div className="py-6 text-center text-xs text-muted-foreground">
-            加载中...
+            {t("loading")}
           </div>
         ) : sortedCombos.length > 0 ? (
           <>
@@ -522,7 +525,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索..."
+                placeholder={t("comboSearchPlaceholder")}
                 className="h-8 pl-8 pr-8 text-xs"
                 data-testid="combo-table-search"
               />
@@ -530,7 +533,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
                 <button
                   type="button"
                   onClick={() => setSearchQuery("")}
-                  aria-label="清除搜索"
+                  aria-label={t("clearSearch")}
                   className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground">
                   <X className="h-3.5 w-3.5" />
                 </button>
@@ -547,19 +550,19 @@ export function CombosSection({ settings }: CombosSectionProps) {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="sticky left-0 top-0 z-20 w-[200px] min-w-[200px] whitespace-nowrap bg-card">
-                          名称 / 标签
+                          {t("comboName")} / {t("comboTag")}
                         </TableHead>
                         <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
-                          CAS
+                          {t("comboCas")}
                         </TableHead>
                         <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
-                          账号
+                          {t("comboAccount")}
                         </TableHead>
                         <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
-                          回调
+                          {t("comboCallback")}
                         </TableHead>
                         <TableHead className="sticky right-0 top-0 z-20 w-[80px] min-w-[80px] whitespace-nowrap bg-card text-right">
-                          操作
+                          {t("actions")}
                         </TableHead>
                       </TableRow>
                     </TableHeader>
@@ -578,7 +581,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
                                   {combo.pinned && (
                                     <Pin
                                       className="h-3.5 w-3.5 shrink-0 text-primary"
-                                      aria-label="已置顶"
+                                      aria-label={t("pinnedAria")}
                                     />
                                   )}
                                   <span className="truncate">{combo.name}</span>
@@ -590,21 +593,27 @@ export function CombosSection({ settings }: CombosSectionProps) {
                               {cas ? (
                                 cas.name
                               ) : (
-                                <span className="text-destructive">已删除</span>
+                                <span className="text-destructive">
+                                  {t("configDeleted")}
+                                </span>
                               )}
                             </TableCell>
                             <TableCell className="max-w-[140px] truncate text-muted-foreground">
                               {acc ? (
                                 acc.name
                               ) : (
-                                <span className="text-destructive">已删除</span>
+                                <span className="text-destructive">
+                                  {t("configDeleted")}
+                                </span>
                               )}
                             </TableCell>
                             <TableCell className="max-w-[140px] truncate text-muted-foreground">
                               {cb ? (
                                 cb.name
                               ) : (
-                                <span className="text-destructive">已删除</span>
+                                <span className="text-destructive">
+                                  {t("configDeleted")}
+                                </span>
                               )}
                             </TableCell>
                             <TableCell className="sticky right-0 z-10 w-[80px] min-w-[80px] whitespace-nowrap bg-card text-right">
@@ -625,7 +634,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
                                     ) : (
                                       <Pin className="mr-2 h-4 w-4" />
                                     )}
-                                    {combo.pinned ? "取消置顶" : "置顶"}
+                                    {combo.pinned ? t("unpin") : t("pin")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() => handleCopy(combo)}>
@@ -634,12 +643,14 @@ export function CombosSection({ settings }: CombosSectionProps) {
                                     ) : (
                                       <Copy className="mr-2 h-4 w-4" />
                                     )}
-                                    {copiedId === combo.id ? "已复制" : "复制"}
+                                    {copiedId === combo.id
+                                      ? t("copied")
+                                      : t("copy")}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() => openEdit(combo)}>
                                     <Pencil className="mr-2 h-4 w-4" />
-                                    编辑
+                                    {t("edit")}
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <AlertDialog
@@ -654,26 +665,27 @@ export function CombosSection({ settings }: CombosSectionProps) {
                                         setPendingDeleteId(combo.id)
                                       }}>
                                       <Trash2 className="mr-2 h-4 w-4" />
-                                      删除
+                                      {t("delete")}
                                     </DropdownMenuItem>
                                     <AlertDialogContent>
                                       <AlertDialogHeader>
                                         <AlertDialogTitle>
-                                          删除登录组合
+                                          {t("deleteComboTitle")}
                                         </AlertDialogTitle>
                                         <AlertDialogDescription>
-                                          确认要删除组合 "{combo.name}"
-                                          吗?此操作不可撤销。
+                                          {t("deleteComboDescription")(
+                                            combo.name
+                                          )}
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <AlertDialogFooter>
                                         <AlertDialogCancel>
-                                          取消
+                                          {t("cancel")}
                                         </AlertDialogCancel>
                                         <AlertDialogAction
                                           onClick={confirmDelete}
                                           className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                          删除
+                                          {t("delete")}
                                         </AlertDialogAction>
                                       </AlertDialogFooter>
                                     </AlertDialogContent>
@@ -690,13 +702,13 @@ export function CombosSection({ settings }: CombosSectionProps) {
               </>
             ) : (
               <div className="py-6 text-center text-xs text-muted-foreground">
-                没有匹配的组合
+                {t("combosNoMatch")}
               </div>
             )}
           </>
         ) : (
           <div className="py-6 text-center text-xs text-muted-foreground">
-            还没有组合。点右上角"新建组合"开始。
+            {t("combosEmpty")}
           </div>
         )}
       </CardContent>

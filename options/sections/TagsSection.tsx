@@ -111,11 +111,11 @@ export function TagsSection({
   const saveForm = async () => {
     const name = form.name.trim()
     if (!name) {
-      setFormError("请输入标签名称")
+      setFormError(t("tagNameRequired"))
       return
     }
     if (name.length > 16) {
-      setFormError("标签名称不能超过 16 个字符")
+      setFormError(t("tagNameTooLong"))
       return
     }
     if (editingId) {
@@ -138,16 +138,15 @@ export function TagsSection({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Tag className="h-5 w-5 text-primary" />
-            <CardTitle>{t("tagManagement") || "标签管理"}</CardTitle>
+            <CardTitle>{t("tagManagement")}</CardTitle>
           </div>
           <Button onClick={openCreate} size="sm" data-testid="tags-new-button">
             <Plus className="mr-2 h-4 w-4" />
-            新建标签
+            {t("newTag")}
           </Button>
         </div>
         <CardDescription>
-          创建可复用的彩色标签, 并在 CAS / 回调 / 账号 / 组合中引用。当前{" "}
-          {tags.length} 个。
+          {t("tagManagementDescription")(tags.length)}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -157,30 +156,30 @@ export function TagsSection({
             className="space-y-3 rounded-md border border-border bg-muted/30 p-4">
             <div className="flex items-center justify-between">
               <h4 className="text-sm font-medium">
-                {editingId ? "编辑标签" : "新建标签"}
+                {editingId ? t("editTag") : t("newTag")}
               </h4>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={cancelForm}
                 data-testid="tags-form-cancel">
-                取消
+                {t("cancel")}
               </Button>
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="tag-name">名称</Label>
+                <Label htmlFor="tag-name">{t("tagName")}</Label>
                 <Input
                   id="tag-name"
                   data-testid="tag-name"
                   maxLength={16}
-                  placeholder="如:生产 / 测试 / 个人"
+                  placeholder={t("tagNamePlaceholder")}
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>颜色</Label>
+                <Label>{t("tagColor")}</Label>
                 <Select
                   value={form.color}
                   onValueChange={(v) =>
@@ -199,11 +198,11 @@ export function TagsSection({
                 </Select>
               </div>
               <div className="space-y-1.5 md:col-span-2">
-                <Label>预览</Label>
+                <Label>{t("tagPreview")}</Label>
                 <div className="flex items-center gap-2">
                   <span
                     className={`inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium ${COLOR_CLASSES[form.color]}`}>
-                    {form.name.trim() || "标签预览"}
+                    {form.name.trim() || t("tagPreviewLabel")}
                   </span>
                 </div>
               </div>
@@ -217,7 +216,7 @@ export function TagsSection({
             )}
             <div className="flex justify-end gap-2">
               <Button onClick={saveForm} data-testid="tags-form-save" size="sm">
-                保存
+                {t("save")}
               </Button>
             </div>
           </div>
@@ -231,16 +230,16 @@ export function TagsSection({
               <TableHeader>
                 <TableRow>
                   <TableHead className="sticky top-0 z-10 w-[80px] whitespace-nowrap bg-card">
-                    颜色
+                    {t("tagColor")}
                   </TableHead>
                   <TableHead className="sticky top-0 z-10 max-w-[200px] whitespace-nowrap bg-card">
-                    名称
+                    {t("tagName")}
                   </TableHead>
                   <TableHead className="sticky top-0 z-10 w-[120px] whitespace-nowrap bg-card">
-                    预览
+                    {t("tagPreview")}
                   </TableHead>
                   <TableHead className="sticky top-0 z-10 w-[80px] whitespace-nowrap bg-card text-right">
-                    操作
+                    {t("actions")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -273,7 +272,7 @@ export function TagsSection({
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => openEdit(tag)}>
                             <Pencil className="mr-2 h-4 w-4" />
-                            编辑
+                            {t("edit")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <AlertDialog
@@ -288,22 +287,25 @@ export function TagsSection({
                                 setPendingDeleteId(tag.id)
                               }}>
                               <Trash2 className="mr-2 h-4 w-4" />
-                              删除
+                              {t("delete")}
                             </DropdownMenuItem>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>删除标签</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  {t("deleteTagTitle")}
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  确认要删除标签 "{tag.name}"
-                                  吗?删除后引用此标签的配置会丢失该标签。此操作不可撤销。
+                                  {t("deleteTagDescription")(tag.name)}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>取消</AlertDialogCancel>
+                                <AlertDialogCancel>
+                                  {t("cancel")}
+                                </AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={confirmDelete}
                                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                                  删除
+                                  {t("delete")}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -318,7 +320,7 @@ export function TagsSection({
           </div>
         ) : (
           <div className="py-6 text-center text-xs text-muted-foreground">
-            还没有标签。点右上角"新建标签"开始。
+            {t("tagEmpty")}
           </div>
         )}
       </CardContent>
