@@ -1,9 +1,16 @@
-import { Check } from "lucide-react"
+import { Check, X } from "lucide-react"
 import React from "react"
 
+import { COLOR_CLASSES } from "~/components/ui/tag-badge"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "~/components/ui/select"
 import { cn } from "~/lib/utils"
 import type { Tag } from "~/types"
-import { COLOR_CLASSES } from "~/components/ui/tag-badge"
 
 interface TagMultiSelectProps {
   tags: Tag[]
@@ -22,18 +29,20 @@ export function TagMultiSelect({
 }: TagMultiSelectProps) {
   if (tags.length === 0) {
     return (
-      <p className="text-xs text-muted-foreground" data-testid={`${testId}-empty`}>
+      <p
+        className="text-xs text-muted-foreground"
+        data-testid={`${testId}-empty`}>
         {emptyText}
       </p>
     )
   }
   const toggle = (id: string) => {
-    onChange(value.includes(id) ? value.filter((v) => v !== id) : [...value, id])
+    onChange(
+      value.includes(id) ? value.filter((v) => v !== id) : [...value, id]
+    )
   }
   return (
-    <div
-      className="flex flex-wrap gap-1.5"
-      data-testid={testId}>
+    <div className="flex flex-wrap gap-1.5" data-testid={testId}>
       {tags.map((tag) => {
         const selected = value.includes(tag.id)
         return (
@@ -63,6 +72,86 @@ export function TagMultiSelect({
   )
 }
 
+interface TagSingleSelectProps {
+  tags: Tag[]
+  value?: string
+  onChange: (tagId: string | undefined) => void
+  testId?: string
+  emptyText?: string
+  placeholder?: string
+}
+
+export function TagSingleSelect({
+  tags,
+  value,
+  onChange,
+  testId,
+  emptyText = "暂无可选标签,请先在 '标签管理' 中创建",
+  placeholder = "选择标签"
+}: TagSingleSelectProps) {
+  if (tags.length === 0) {
+    return (
+      <p
+        className="text-xs text-muted-foreground"
+        data-testid={`${testId}-empty`}>
+        {emptyText}
+      </p>
+    )
+  }
+  const selectedTag = tags.find((t) => t.id === value)
+  return (
+    <div className="flex items-center gap-2" data-testid={testId}>
+      <Select
+        value={value ?? ""}
+        onValueChange={(v) => onChange(v || undefined)}>
+        <SelectTrigger
+          data-testid={testId ? `${testId}-trigger` : undefined}
+          className="h-9 flex-1">
+          <SelectValue placeholder={placeholder}>
+            {selectedTag ? (
+              <span
+                className={cn(
+                  "inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium",
+                  COLOR_CLASSES[selectedTag.color]
+                )}>
+                {selectedTag.name}
+              </span>
+            ) : (
+              <span className="text-muted-foreground">{placeholder}</span>
+            )}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {tags.map((tag) => (
+            <SelectItem
+              key={tag.id}
+              value={tag.id}
+              data-testid={testId ? `${testId}-option-${tag.id}` : undefined}>
+              <span
+                className={cn(
+                  "mr-2 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium",
+                  COLOR_CLASSES[tag.color]
+                )}>
+                {tag.name}
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange(undefined)}
+          aria-label="清除标签"
+          data-testid={testId ? `${testId}-clear` : undefined}
+          className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  )
+}
+
 const DOT_HEX: Record<Tag["color"], string> = {
   red: "#ef4444",
   orange: "#f97316",
@@ -81,12 +170,7 @@ interface TagDotProps {
   className?: string
 }
 
-export function TagDot({
-  tag,
-  selected,
-  onClick,
-  className
-}: TagDotProps) {
+export function TagDot({ tag, selected, onClick, className }: TagDotProps) {
   return (
     <button
       type="button"
@@ -95,7 +179,7 @@ export function TagDot({
       className={cn(
         "inline-block h-4 w-4 rounded-full border-2 transition-all",
         selected
-          ? "border-foreground scale-110"
+          ? "scale-110 border-foreground"
           : "border-transparent hover:scale-110",
         className
       )}

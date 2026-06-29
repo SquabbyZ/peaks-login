@@ -49,7 +49,7 @@ import {
   TAG_COLORS,
   TagBadge
 } from "~/components/ui/tag-badge"
-import type { Tag as TagModel, TagColor } from "~/types"
+import type { TagColor, Tag as TagModel } from "~/types"
 
 interface TagsSectionProps {
   tags: TagModel[]
@@ -66,7 +66,13 @@ export interface TagFormData {
 
 const EMPTY_FORM: TagFormData = { name: "", color: "blue" }
 
-export function TagsSection({ tags, t, onAdd, onEdit, onDelete }: TagsSectionProps) {
+export function TagsSection({
+  tags,
+  t,
+  onAdd,
+  onEdit,
+  onDelete
+}: TagsSectionProps) {
   const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [form, setForm] = useState<TagFormData>(EMPTY_FORM)
@@ -134,10 +140,7 @@ export function TagsSection({ tags, t, onAdd, onEdit, onDelete }: TagsSectionPro
             <Tag className="h-5 w-5 text-primary" />
             <CardTitle>{t("tagManagement") || "标签管理"}</CardTitle>
           </div>
-          <Button
-            onClick={openCreate}
-            size="sm"
-            data-testid="tags-new-button">
+          <Button onClick={openCreate} size="sm" data-testid="tags-new-button">
             <Plus className="mr-2 h-4 w-4" />
             新建标签
           </Button>
@@ -213,10 +216,7 @@ export function TagsSection({ tags, t, onAdd, onEdit, onDelete }: TagsSectionPro
               </div>
             )}
             <div className="flex justify-end gap-2">
-              <Button
-                onClick={saveForm}
-                data-testid="tags-form-save"
-                size="sm">
+              <Button onClick={saveForm} data-testid="tags-form-save" size="sm">
                 保存
               </Button>
             </div>
@@ -294,7 +294,8 @@ export function TagsSection({ tags, t, onAdd, onEdit, onDelete }: TagsSectionPro
                               <AlertDialogHeader>
                                 <AlertDialogTitle>删除标签</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  确认要删除标签 "{tag.name}" 吗?删除后引用此标签的配置会丢失该标签。此操作不可撤销。
+                                  确认要删除标签 "{tag.name}"
+                                  吗?删除后引用此标签的配置会丢失该标签。此操作不可撤销。
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>

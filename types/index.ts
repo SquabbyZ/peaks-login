@@ -23,6 +23,8 @@ export interface CasConfig {
   usernameField?: string
   passwordField?: string
   tokenResponseKey?: string // 从 CAS 响应中获取 token 的 key
+  tagId?: string
+  // 旧数据: 旧版多选 tagId 数组, 新代码用 tagId, 渲染时 fallback 用 tagId ?? tagIds?.[0]
   tagIds?: string[]
   createdAt: number
   updatedAt: number
@@ -34,6 +36,8 @@ export interface CallbackConfig {
   url: string
   tokenKeys?: string[] // 存储 token 到 localStorage 的多个 key
   enableCors?: boolean // 是否启用跨域支持
+  tagId?: string
+  // 旧数据: 旧版多选 tagId 数组, 新代码用 tagId, 渲染时 fallback 用 tagId ?? tagIds?.[0]
   tagIds?: string[]
   createdAt: number
   updatedAt: number
@@ -44,6 +48,8 @@ export interface AccountConfig {
   name: string
   username: string
   encryptedPassword: string
+  tagId?: string
+  // 旧数据: 旧版多选 tagId 数组, 新代码用 tagId, 渲染时 fallback 用 tagId ?? tagIds?.[0]
   tagIds?: string[]
   createdAt: number
   updatedAt: number
@@ -67,6 +73,8 @@ export interface LoginCombo {
   tokenKeyMappings?: Record<string, string> // ${callbackId}:${tokenKey} -> casId
   pinned?: boolean
   lastUsedAt?: number
+  tagId?: string
+  // 旧数据: 旧版多选 tagId 数组, 新代码用 tagId, 渲染时 fallback 用 tagId ?? tagIds?.[0]
   tagIds?: string[]
   createdAt: number
   updatedAt: number

@@ -121,9 +121,27 @@ function OptionsIndex() {
   const buildDefaultTags = (): Tag[] => {
     const now = createTimestamp()
     return [
-      { id: "default-prod", name: "线上", color: "green", createdAt: now, updatedAt: now },
-      { id: "default-dev", name: "开发", color: "blue", createdAt: now, updatedAt: now },
-      { id: "default-test", name: "测试", color: "purple", createdAt: now, updatedAt: now }
+      {
+        id: "default-prod",
+        name: "线上",
+        color: "green",
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: "default-dev",
+        name: "开发",
+        color: "blue",
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: "default-test",
+        name: "测试",
+        color: "purple",
+        createdAt: now,
+        updatedAt: now
+      }
     ]
   }
 
@@ -278,7 +296,7 @@ function OptionsIndex() {
       usernameField: data.usernameField || "email",
       passwordField: data.passwordField || "password",
       tokenResponseKey: data.tokenResponseKey || "token",
-      tagIds: data.tagIds ?? [],
+      tagId: data.tagId,
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
@@ -306,7 +324,7 @@ function OptionsIndex() {
               usernameField: data.usernameField || "email",
               passwordField: data.passwordField || "password",
               tokenResponseKey: data.tokenResponseKey || "token",
-              tagIds: data.tagIds ?? c.tagIds ?? [],
+              tagId: data.tagId ?? c.tagId,
               updatedAt: createTimestamp()
             }
           : c
@@ -341,7 +359,7 @@ function OptionsIndex() {
       usernameField: cas.usernameField || "email",
       passwordField: cas.passwordField || "password",
       tokenResponseKey: cas.tokenResponseKey || "token",
-      tagIds: cas.tagIds ? [...cas.tagIds] : [],
+      tagId: cas.tagId,
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
@@ -403,7 +421,7 @@ function OptionsIndex() {
       url: data.url,
       tokenKeys: data.tokenKeys.filter((k) => k.trim() !== ""),
       enableCors: data.enableCors,
-      tagIds: data.tagIds ?? [],
+      tagId: data.tagId,
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
@@ -430,7 +448,7 @@ function OptionsIndex() {
               url: data.url,
               tokenKeys: data.tokenKeys.filter((k) => k.trim() !== ""),
               enableCors: data.enableCors,
-              tagIds: data.tagIds ?? c.tagIds ?? [],
+              tagId: data.tagId ?? c.tagId,
               updatedAt: createTimestamp()
             }
           : c
@@ -464,7 +482,7 @@ function OptionsIndex() {
       url: cb.url,
       tokenKeys: cb.tokenKeys || ["accessToken"],
       enableCors: cb.enableCors || false,
-      tagIds: cb.tagIds ? [...cb.tagIds] : [],
+      tagId: cb.tagId,
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
@@ -539,7 +557,7 @@ function OptionsIndex() {
       name: data.name,
       username: data.username,
       encryptedPassword: JSON.stringify(encrypted),
-      tagIds: data.tagIds ?? [],
+      tagId: data.tagId,
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
@@ -561,7 +579,7 @@ function OptionsIndex() {
               ...a,
               name: data.name,
               username: data.username,
-              tagIds: data.tagIds ?? a.tagIds ?? [],
+              tagId: data.tagId ?? a.tagId,
               updatedAt: createTimestamp()
             }
           : a
@@ -589,7 +607,7 @@ function OptionsIndex() {
       name: `${acc.name} (${t("copy")})`,
       username: acc.username,
       encryptedPassword: acc.encryptedPassword,
-      tagIds: acc.tagIds ? [...acc.tagIds] : [],
+      tagId: acc.tagId,
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }

@@ -12,7 +12,7 @@ import {
 } from "~/components/ui/dialog"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
-import { TagMultiSelect } from "~/components/ui/tag-picker"
+import { TagSingleSelect } from "~/components/ui/tag-picker"
 import { decrypt, importKey } from "~/lib/crypto"
 import type { AccountConfig, Tag } from "~/types"
 
@@ -20,7 +20,7 @@ export interface AccountFormData {
   name: string
   username: string
   password?: string
-  tagIds: string[]
+  tagId?: string
 }
 
 interface AccountDialogsProps {
@@ -145,10 +145,10 @@ export function AccountDialogs({
             </div>
             <div className="grid gap-2">
               <Label>标签</Label>
-              <TagMultiSelect
+              <TagSingleSelect
                 tags={tags}
-                value={form.tagIds ?? []}
-                onChange={(next) => setForm({ ...form, tagIds: next })}
+                value={form.tagId}
+                onChange={(next) => setForm({ ...form, tagId: next })}
                 testId="new-account-tags"
               />
             </div>
@@ -232,10 +232,10 @@ export function AccountDialogs({
             </div>
             <div className="grid gap-2">
               <Label>标签</Label>
-              <TagMultiSelect
+              <TagSingleSelect
                 tags={tags}
-                value={form.tagIds ?? []}
-                onChange={(next) => setForm({ ...form, tagIds: next })}
+                value={form.tagId}
+                onChange={(next) => setForm({ ...form, tagId: next })}
                 testId="edit-account-tags"
               />
             </div>

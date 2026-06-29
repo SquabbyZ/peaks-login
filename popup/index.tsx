@@ -5,8 +5,8 @@ import icon from "~/assets/icon.png"
 import { Button } from "~/components/ui/button"
 import { Card, CardContent } from "~/components/ui/card"
 import { Input } from "~/components/ui/input"
-import { Toaster } from "~/components/ui/toaster"
 import { TagBadge } from "~/components/ui/tag-badge"
+import { Toaster } from "~/components/ui/toaster"
 import {
   Tooltip,
   TooltipContent,
@@ -127,11 +127,11 @@ function PopupIndex() {
     const q = searchQuery.trim().toLowerCase()
     if (!q) return sortedCombos
     return sortedCombos.filter((c) => {
-      const tagNames = (c.tagIds ?? [])
-        .map((id) => tagMap.get(id)?.name ?? "")
-        .join(" ")
-        .toLowerCase()
-      return c.name.toLowerCase().includes(q) || tagNames.includes(q)
+      const effectiveTagId = c.tagId ?? c.tagIds?.[0]
+      const tagName = effectiveTagId
+        ? (tagMap.get(effectiveTagId)?.name ?? "").toLowerCase()
+        : ""
+      return c.name.toLowerCase().includes(q) || tagName.includes(q)
     })
   }, [sortedCombos, searchQuery, tagMap])
 
@@ -463,16 +463,20 @@ function PopupIndex() {
                         <span className="truncate">{combo.name}</span>
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1">
-                        {(combo.tagIds ?? []).length > 0 ? (
-                          (combo.tagIds ?? [])
-                            .map((id) => tagMap.get(id))
-                            .filter((t): t is Tag => Boolean(t))
-                            .map((tag) => <TagBadge key={tag.id} tag={tag} />)
-                        ) : (
-                          <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                            未设置
-                          </span>
-                        )}
+                        {(() => {
+                          const effectiveTagId = combo.tagId ?? combo.tagIds?.[0]
+                          const tag = effectiveTagId
+                            ? tagMap.get(effectiveTagId)
+                            : null
+                          if (tag) {
+                            return <TagBadge tag={tag} />
+                          }
+                          return (
+                            <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                              未设置
+                            </span>
+                          )
+                        })()}
                       </div>
                     </div>
                     <div className="ml-2 flex shrink-0 items-center">

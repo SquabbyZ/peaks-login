@@ -13,7 +13,7 @@ import {
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { Switch } from "~/components/ui/switch"
-import { TagMultiSelect } from "~/components/ui/tag-picker"
+import { TagSingleSelect } from "~/components/ui/tag-picker"
 import type { CallbackConfig, Tag } from "~/types"
 
 export interface CallbackFormData {
@@ -21,7 +21,7 @@ export interface CallbackFormData {
   url: string
   tokenKeys: string[]
   enableCors: boolean
-  tagIds: string[]
+  tagId?: string
 }
 
 interface CallbackDialogsProps {
@@ -153,10 +153,10 @@ export function CallbackDialogs({
               </div>
               <div className="space-y-2.5">
                 <Label>标签</Label>
-                <TagMultiSelect
+                <TagSingleSelect
                   tags={tags}
-                  value={form.tagIds ?? []}
-                  onChange={(next) => setForm({ ...form, tagIds: next })}
+                  value={form.tagId}
+                  onChange={(next) => setForm({ ...form, tagId: next })}
                   testId="new-callback-tags"
                 />
               </div>
@@ -212,10 +212,10 @@ export function CallbackDialogs({
             </div>
             <div className="grid gap-2">
               <Label>标签</Label>
-              <TagMultiSelect
+              <TagSingleSelect
                 tags={tags}
-                value={form.tagIds ?? []}
-                onChange={(next) => setForm({ ...form, tagIds: next })}
+                value={form.tagId}
+                onChange={(next) => setForm({ ...form, tagId: next })}
                 testId="edit-callback-tags"
               />
             </div>

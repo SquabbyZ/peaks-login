@@ -46,11 +46,11 @@ import {
   TableHeader,
   TableRow
 } from "~/components/ui/table"
+import { TagBadge } from "~/components/ui/tag-badge"
 import {
   AccountDialogs,
   type AccountFormData
 } from "~/options/dialogs/AccountDialogs"
-import { TagBadge } from "~/components/ui/tag-badge"
 import type { AccountConfig, Tag } from "~/types"
 
 interface AccountSectionProps {
@@ -69,13 +69,13 @@ const EMPTY_FORM: AccountFormData = {
   name: "",
   username: "",
   password: "",
-  tagIds: []
+  tagId: undefined
 }
 const EMPTY_EDIT_FORM: AccountFormData = {
   name: "",
   username: "",
   password: "",
-  tagIds: []
+  tagId: undefined
 }
 
 export function AccountSection({
@@ -104,14 +104,14 @@ export function AccountSection({
     const q = searchQuery.trim().toLowerCase()
     if (!q) return accounts
     return accounts.filter((a) => {
-      const tagNames = (a.tagIds ?? [])
-        .map((id) => tagMap.get(id)?.name ?? "")
-        .join(" ")
-        .toLowerCase()
+      const effectiveTagId = a.tagId ?? a.tagIds?.[0]
+      const tagName = effectiveTagId
+        ? (tagMap.get(effectiveTagId)?.name ?? "").toLowerCase()
+        : ""
       return (
         a.name.toLowerCase().includes(q) ||
         a.username.toLowerCase().includes(q) ||
-        tagNames.includes(q)
+        tagName.includes(q)
       )
     })
   }, [accounts, searchQuery, tagMap])
@@ -122,7 +122,7 @@ export function AccountSection({
       ...EMPTY_EDIT_FORM,
       name: acc.name,
       username: acc.username,
-      tagIds: acc.tagIds ?? []
+      tagId: acc.tagId ?? acc.tagIds?.[0]
     })
   }
 
@@ -212,89 +212,84 @@ export function AccountSection({
               </TableHeader>
               <TableBody>
                 {filteredAccounts.map((acc) => {
-                  const accTags = (acc.tagIds ?? [])
-                    .map((id) => tagMap.get(id))
-                    .filter((tg): tg is NonNullable<typeof tg> => Boolean(tg))
+                  const accTagId = acc.tagId ?? acc.tagIds?.[0]
+                  const accTag = accTagId ? tagMap.get(accTagId) : null
                   return (
-                  <TableRow key={acc.id}>
-                    <TableCell className="max-w-[150px] truncate font-medium">
-                      {acc.name}
-                    </TableCell>
-                    <TableCell className="max-w-[150px] truncate">
-                      {acc.username}
-                    </TableCell>
-                    <TableCell className="max-w-[120px]">
-                      <span className="inline-flex flex-wrap items-center gap-1">
-                        {accTags.map((tg) => (
-                          <TagBadge key={tg.id} tag={tg} />
-                        ))}
-                      </span>
-                    </TableCell>
-                    <TableCell className="max-w-[150px] text-muted-foreground">
-                      {t("passwordEncrypted")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEdit(acc)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            {t("edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onCopy(acc)}>
-                            {copiedId === acc.id ? (
-                              <Check className="mr-2 h-4 w-4 text-green-500" />
-                            ) : (
-                              <Copy className="mr-2 h-4 w-4" />
-                            )}
-                            {t("copy")}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <AlertDialog
-                            open={pendingDeleteId === acc.id}
-                            onOpenChange={(o) =>
-                              !o && setPendingDeleteId(null)
-                            }>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onSelect={(e) => {
-                                  e.preventDefault()
-                                  setPendingDeleteId(acc.id)
-                                }}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                {t("delete")}
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  {t("deleteAccountTitle")}
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t("deleteAccountDescription")} "{acc.name}"
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>
-                                  {t("cancel")}
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={confirmDelete}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    <TableRow key={acc.id}>
+                      <TableCell className="max-w-[150px] truncate font-medium">
+                        {acc.name}
+                      </TableCell>
+                      <TableCell className="max-w-[150px] truncate">
+                        {acc.username}
+                      </TableCell>
+                      <TableCell className="max-w-[120px]">
+                        {accTag ? <TagBadge tag={accTag} /> : null}
+                      </TableCell>
+                      <TableCell className="max-w-[150px] text-muted-foreground">
+                        {t("passwordEncrypted")}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEdit(acc)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              {t("edit")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onCopy(acc)}>
+                              {copiedId === acc.id ? (
+                                <Check className="mr-2 h-4 w-4 text-green-500" />
+                              ) : (
+                                <Copy className="mr-2 h-4 w-4" />
+                              )}
+                              {t("copy")}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <AlertDialog
+                              open={pendingDeleteId === acc.id}
+                              onOpenChange={(o) =>
+                                !o && setPendingDeleteId(null)
+                              }>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onSelect={(e) => {
+                                    e.preventDefault()
+                                    setPendingDeleteId(acc.id)
+                                  }}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
                                   {t("delete")}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    {t("deleteAccountTitle")}
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {t("deleteAccountDescription")} "{acc.name}"
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>
+                                    {t("cancel")}
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={confirmDelete}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                    {t("delete")}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
               </TableBody>

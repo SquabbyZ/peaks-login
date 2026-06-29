@@ -62,7 +62,7 @@ import {
   TableRow
 } from "~/components/ui/table"
 import { TagBadge } from "~/components/ui/tag-badge"
-import { TagMultiSelect } from "~/components/ui/tag-picker"
+import { TagSingleSelect } from "~/components/ui/tag-picker"
 import { createTimestamp, generateId } from "~/lib/storage"
 import { useCombos } from "~/lib/useCombos"
 import type {
@@ -79,7 +79,7 @@ interface CombosSectionProps {
 
 interface ComboDraft {
   name: string
-  tagIds: string[]
+  tagId?: string
   casId: string
   accountId: string
   callbackId: string
@@ -88,7 +88,7 @@ interface ComboDraft {
 
 const EMPTY_DRAFT: ComboDraft = {
   name: "",
-  tagIds: [],
+  tagId: undefined,
   casId: "",
   accountId: "",
   callbackId: "",
@@ -145,7 +145,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
     setEditingId(combo.id)
     setDraft({
       name: combo.name,
-      tagIds: combo.tagIds ?? [],
+      tagId: combo.tagId ?? combo.tagIds?.[0],
       casId: combo.casId,
       accountId: combo.accountId,
       callbackId: combo.callbackId,
@@ -177,7 +177,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
     const next: LoginCombo = {
       id: editingId ?? generateId(),
       name,
-      tagIds: draft.tagIds,
+      tagId: draft.tagId,
       casId: draft.casId,
       accountId: draft.accountId,
       callbackId: draft.callbackId,
@@ -196,7 +196,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
     const next: LoginCombo = {
       id: generateId(),
       name: `${combo.name} (副本)`,
-      tagIds: combo.tagIds ? [...combo.tagIds] : [],
+      tagId: combo.tagId ?? combo.tagIds?.[0],
       casId: combo.casId,
       accountId: combo.accountId,
       callbackId: combo.callbackId,
@@ -244,13 +244,13 @@ export function CombosSection({ settings }: CombosSectionProps) {
       const cas = casMap.get(combo.casId)
       const acc = accMap.get(combo.accountId)
       const cb = cbMap.get(combo.callbackId)
-      const tagNames = (combo.tagIds ?? [])
-        .map((id) => tagMap.get(id)?.name ?? "")
-        .join(" ")
-        .toLowerCase()
+      const effectiveTagId = combo.tagId ?? combo.tagIds?.[0]
+      const tagName = effectiveTagId
+        ? (tagMap.get(effectiveTagId)?.name ?? "").toLowerCase()
+        : ""
       return (
         combo.name.toLowerCase().includes(q) ||
-        tagNames.includes(q) ||
+        tagName.includes(q) ||
         (cas?.name ?? "").toLowerCase().includes(q) ||
         (acc?.name ?? "").toLowerCase().includes(q) ||
         (acc?.username ?? "").toLowerCase().includes(q) ||
@@ -259,16 +259,14 @@ export function CombosSection({ settings }: CombosSectionProps) {
     })
   }, [sortedCombos, searchQuery, casMap, accMap, cbMap, tagMap])
 
-  const renderTags = (combo: LoginCombo) => {
-    const tags = (combo.tagIds ?? [])
-      .map((id) => tagMap.get(id))
-      .filter((t): t is NonNullable<typeof t> => Boolean(t))
-    if (tags.length === 0) return null
+  const renderTag = (combo: LoginCombo) => {
+    const effectiveTagId = combo.tagId ?? combo.tagIds?.[0]
+    if (!effectiveTagId) return null
+    const tag = tagMap.get(effectiveTagId)
+    if (!tag) return null
     return (
       <span className="ml-1 inline-flex flex-wrap items-center gap-1">
-        {tags.map((tag) => (
-          <TagBadge key={tag.id} tag={tag} />
-        ))}
+        <TagBadge tag={tag} />
       </span>
     )
   }
@@ -333,10 +331,10 @@ export function CombosSection({ settings }: CombosSectionProps) {
               </div>
               <div className="space-y-1.5 md:col-span-2">
                 <Label>标签</Label>
-                <TagMultiSelect
+                <TagSingleSelect
                   tags={tagList}
-                  value={draft.tagIds}
-                  onChange={(next) => setDraft({ ...draft, tagIds: next })}
+                  value={draft.tagId}
+                  onChange={(next) => setDraft({ ...draft, tagId: next })}
                   testId="combo-tags"
                 />
               </div>
@@ -585,7 +583,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
                                   )}
                                   <span className="truncate">{combo.name}</span>
                                 </div>
-                                {renderTags(combo)}
+                                {renderTag(combo)}
                               </div>
                             </TableCell>
                             <TableCell className="max-w-[140px] truncate text-muted-foreground">

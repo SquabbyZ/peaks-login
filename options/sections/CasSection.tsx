@@ -48,6 +48,7 @@ import {
   TableHeader,
   TableRow
 } from "~/components/ui/table"
+import { TagBadge } from "~/components/ui/tag-badge"
 import {
   Tooltip,
   TooltipContent,
@@ -55,7 +56,6 @@ import {
 } from "~/components/ui/tooltip"
 import { CasDialogs, type CasFormData } from "~/options/dialogs/CasDialogs"
 import type { CasConfig, Tag } from "~/types"
-import { TagBadge } from "~/components/ui/tag-badge"
 
 interface CasSectionProps {
   configs: CasConfig[]
@@ -76,7 +76,7 @@ const EMPTY_FORM: CasFormData = {
   usernameField: "email",
   passwordField: "password",
   tokenResponseKey: "token",
-  tagIds: []
+  tagId: undefined
 }
 
 export function CasSection({
@@ -106,14 +106,14 @@ export function CasSection({
     const q = searchQuery.trim().toLowerCase()
     if (!q) return configs
     return configs.filter((c) => {
-      const tagNames = (c.tagIds ?? [])
-        .map((id) => tagMap.get(id)?.name ?? "")
-        .join(" ")
-        .toLowerCase()
+      const effectiveTagId = c.tagId ?? c.tagIds?.[0]
+      const tagName = effectiveTagId
+        ? (tagMap.get(effectiveTagId)?.name ?? "").toLowerCase()
+        : ""
       return (
         c.name.toLowerCase().includes(q) ||
         c.url.toLowerCase().includes(q) ||
-        tagNames.includes(q)
+        tagName.includes(q)
       )
     })
   }, [configs, searchQuery, tagMap])
@@ -126,7 +126,7 @@ export function CasSection({
       usernameField: cas.usernameField || "email",
       passwordField: cas.passwordField || "password",
       tokenResponseKey: cas.tokenResponseKey || "token",
-      tagIds: cas.tagIds ?? []
+      tagId: cas.tagId ?? cas.tagIds?.[0]
     })
   }
 
@@ -241,95 +241,90 @@ export function CasSection({
               </TableHeader>
               <TableBody>
                 {filteredCas.map((cas) => {
-                  const casTags = (cas.tagIds ?? [])
-                    .map((id) => tagMap.get(id))
-                    .filter((tg): tg is NonNullable<typeof tg> => Boolean(tg))
+                  const casTagId = cas.tagId ?? cas.tagIds?.[0]
+                  const casTag = casTagId ? tagMap.get(casTagId) : null
                   return (
-                  <TableRow key={cas.id}>
-                    <TableCell className="max-w-[150px] truncate font-medium">
-                      {cas.name}
-                    </TableCell>
-                    <TableCell className="max-w-[170px] truncate text-muted-foreground">
-                      {cas.url}
-                    </TableCell>
-                    <TableCell className="max-w-[120px]">
-                      <span className="inline-flex flex-wrap items-center gap-1">
-                        {casTags.map((tg) => (
-                          <TagBadge key={tg.id} tag={tg} />
-                        ))}
-                      </span>
-                    </TableCell>
-                    <TableCell className="max-w-[120px] truncate">
-                      {cas.usernameField || "email"}
-                    </TableCell>
-                    <TableCell className="max-w-[120px] truncate">
-                      {cas.passwordField || "password"}
-                    </TableCell>
-                    <TableCell className="max-w-[150px] truncate">
-                      {cas.tokenResponseKey || "token"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEdit(cas)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            {t("edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onCopy(cas)}>
-                            {copiedId === cas.id ? (
-                              <Check className="mr-2 h-4 w-4 text-green-500" />
-                            ) : (
-                              <Copy className="mr-2 h-4 w-4" />
-                            )}
-                            {t("copy")}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <AlertDialog
-                            open={pendingDeleteId === cas.id}
-                            onOpenChange={(o) =>
-                              !o && setPendingDeleteId(null)
-                            }>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onSelect={(e) => {
-                                  e.preventDefault()
-                                  setPendingDeleteId(cas.id)
-                                }}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                {t("delete")}
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  {t("deleteCasTitle")}
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t("deleteCasDescription")} "{cas.name}"
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>
-                                  {t("cancel")}
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={confirmDelete}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    <TableRow key={cas.id}>
+                      <TableCell className="max-w-[150px] truncate font-medium">
+                        {cas.name}
+                      </TableCell>
+                      <TableCell className="max-w-[170px] truncate text-muted-foreground">
+                        {cas.url}
+                      </TableCell>
+                      <TableCell className="max-w-[120px]">
+                        {casTag ? <TagBadge tag={casTag} /> : null}
+                      </TableCell>
+                      <TableCell className="max-w-[120px] truncate">
+                        {cas.usernameField || "email"}
+                      </TableCell>
+                      <TableCell className="max-w-[120px] truncate">
+                        {cas.passwordField || "password"}
+                      </TableCell>
+                      <TableCell className="max-w-[150px] truncate">
+                        {cas.tokenResponseKey || "token"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEdit(cas)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              {t("edit")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onCopy(cas)}>
+                              {copiedId === cas.id ? (
+                                <Check className="mr-2 h-4 w-4 text-green-500" />
+                              ) : (
+                                <Copy className="mr-2 h-4 w-4" />
+                              )}
+                              {t("copy")}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <AlertDialog
+                              open={pendingDeleteId === cas.id}
+                              onOpenChange={(o) =>
+                                !o && setPendingDeleteId(null)
+                              }>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onSelect={(e) => {
+                                    e.preventDefault()
+                                    setPendingDeleteId(cas.id)
+                                  }}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
                                   {t("delete")}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    {t("deleteCasTitle")}
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {t("deleteCasDescription")} "{cas.name}"
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>
+                                    {t("cancel")}
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={confirmDelete}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                    {t("delete")}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
               </TableBody>

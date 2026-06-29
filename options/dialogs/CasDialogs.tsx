@@ -11,7 +11,7 @@ import {
 } from "~/components/ui/dialog"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
-import { TagMultiSelect } from "~/components/ui/tag-picker"
+import { TagSingleSelect } from "~/components/ui/tag-picker"
 import type { CasConfig, Tag } from "~/types"
 
 export interface CasFormData {
@@ -20,7 +20,7 @@ export interface CasFormData {
   usernameField: string
   passwordField: string
   tokenResponseKey: string
-  tagIds: string[]
+  tagId?: string
 }
 
 interface CasDialogsProps {
@@ -78,10 +78,10 @@ export function CasDialogs({
               </div>
               <div className="space-y-2.5">
                 <Label>标签</Label>
-                <TagMultiSelect
+                <TagSingleSelect
                   tags={tags}
-                  value={form.tagIds ?? []}
-                  onChange={(next) => setForm({ ...form, tagIds: next })}
+                  value={form.tagId}
+                  onChange={(next) => setForm({ ...form, tagId: next })}
                   testId="new-cas-tags"
                 />
               </div>
@@ -166,10 +166,10 @@ export function CasDialogs({
             </div>
             <div className="grid gap-2">
               <Label>标签</Label>
-              <TagMultiSelect
+              <TagSingleSelect
                 tags={tags}
-                value={form.tagIds ?? []}
-                onChange={(next) => setForm({ ...form, tagIds: next })}
+                value={form.tagId}
+                onChange={(next) => setForm({ ...form, tagId: next })}
                 testId="edit-cas-tags"
               />
             </div>

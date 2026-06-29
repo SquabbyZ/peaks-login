@@ -48,11 +48,11 @@ import {
   TableHeader,
   TableRow
 } from "~/components/ui/table"
+import { TagBadge } from "~/components/ui/tag-badge"
 import {
   CallbackDialogs,
   type CallbackFormData
 } from "~/options/dialogs/CallbackDialogs"
-import { TagBadge } from "~/components/ui/tag-badge"
 import type { CallbackConfig, Tag } from "~/types"
 
 interface CallbackSectionProps {
@@ -73,7 +73,7 @@ const EMPTY_FORM: CallbackFormData = {
   url: "",
   tokenKeys: ["accessToken"],
   enableCors: false,
-  tagIds: []
+  tagId: undefined
 }
 
 export function CallbackSection({
@@ -103,14 +103,14 @@ export function CallbackSection({
     const q = searchQuery.trim().toLowerCase()
     if (!q) return configs
     return configs.filter((c) => {
-      const tagNames = (c.tagIds ?? [])
-        .map((id) => tagMap.get(id)?.name ?? "")
-        .join(" ")
-        .toLowerCase()
+      const effectiveTagId = c.tagId ?? c.tagIds?.[0]
+      const tagName = effectiveTagId
+        ? (tagMap.get(effectiveTagId)?.name ?? "").toLowerCase()
+        : ""
       return (
         c.name.toLowerCase().includes(q) ||
         c.url.toLowerCase().includes(q) ||
-        tagNames.includes(q)
+        tagName.includes(q)
       )
     })
   }, [configs, searchQuery, tagMap])
@@ -122,7 +122,7 @@ export function CallbackSection({
       url: cb.url,
       tokenKeys: cb.tokenKeys || ["accessToken"],
       enableCors: cb.enableCors || false,
-      tagIds: cb.tagIds ?? []
+      tagId: cb.tagId ?? cb.tagIds?.[0]
     })
   }
 
@@ -234,92 +234,87 @@ export function CallbackSection({
               </TableHeader>
               <TableBody>
                 {filteredCallback.map((cb) => {
-                  const cbTags = (cb.tagIds ?? [])
-                    .map((id) => tagMap.get(id))
-                    .filter((tg): tg is NonNullable<typeof tg> => Boolean(tg))
+                  const cbTagId = cb.tagId ?? cb.tagIds?.[0]
+                  const cbTag = cbTagId ? tagMap.get(cbTagId) : null
                   return (
-                  <TableRow key={cb.id}>
-                    <TableCell className="max-w-[150px] truncate font-medium">
-                      {cb.name}
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                      {cb.url}
-                    </TableCell>
-                    <TableCell className="max-w-[120px]">
-                      <span className="inline-flex flex-wrap items-center gap-1">
-                        {cbTags.map((tg) => (
-                          <TagBadge key={tg.id} tag={tg} />
-                        ))}
-                      </span>
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate text-muted-foreground">
-                      {cb.tokenKeys?.join(", ") || "accessToken"}
-                    </TableCell>
-                    <TableCell className="max-w-[100px]">
-                      {(cb.enableCors ?? false) ? "Yes" : "No"}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEdit(cb)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            {t("edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onCopy(cb)}>
-                            {copiedId === cb.id ? (
-                              <Check className="mr-2 h-4 w-4 text-green-500" />
-                            ) : (
-                              <Copy className="mr-2 h-4 w-4" />
-                            )}
-                            {t("copy")}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <AlertDialog
-                            open={pendingDeleteId === cb.id}
-                            onOpenChange={(o) =>
-                              !o && setPendingDeleteId(null)
-                            }>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onSelect={(e) => {
-                                  e.preventDefault()
-                                  setPendingDeleteId(cb.id)
-                                }}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                {t("delete")}
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>
-                                  {t("deleteCallbackTitle")}
-                                </AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  {t("deleteCallbackDescription")} "{cb.name}"
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>
-                                  {t("cancel")}
-                                </AlertDialogCancel>
-                                <AlertDialogAction
-                                  onClick={confirmDelete}
-                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                    <TableRow key={cb.id}>
+                      <TableCell className="max-w-[150px] truncate font-medium">
+                        {cb.name}
+                      </TableCell>
+                      <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                        {cb.url}
+                      </TableCell>
+                      <TableCell className="max-w-[120px]">
+                        {cbTag ? <TagBadge tag={cbTag} /> : null}
+                      </TableCell>
+                      <TableCell className="max-w-[200px] truncate text-muted-foreground">
+                        {cb.tokenKeys?.join(", ") || "accessToken"}
+                      </TableCell>
+                      <TableCell className="max-w-[100px]">
+                        {(cb.enableCors ?? false) ? "Yes" : "No"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEdit(cb)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              {t("edit")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onCopy(cb)}>
+                              {copiedId === cb.id ? (
+                                <Check className="mr-2 h-4 w-4 text-green-500" />
+                              ) : (
+                                <Copy className="mr-2 h-4 w-4" />
+                              )}
+                              {t("copy")}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <AlertDialog
+                              open={pendingDeleteId === cb.id}
+                              onOpenChange={(o) =>
+                                !o && setPendingDeleteId(null)
+                              }>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onSelect={(e) => {
+                                    e.preventDefault()
+                                    setPendingDeleteId(cb.id)
+                                  }}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
                                   {t("delete")}
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    {t("deleteCallbackTitle")}
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    {t("deleteCallbackDescription")} "{cb.name}"
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>
+                                    {t("cancel")}
+                                  </AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={confirmDelete}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                    {t("delete")}
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
                   )
                 })}
               </TableBody>
