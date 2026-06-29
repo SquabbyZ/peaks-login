@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { memo, useEffect, useMemo, useState } from "react"
 
 import iconDark from "~/assets/icon-dark.png"
 import icon from "~/assets/icon.png"
@@ -38,6 +38,85 @@ import type { AppSettings, LoginCombo, Tag } from "~/types"
 
 type LoginStatus = "idle" | "loading" | "success" | "error"
 
+interface ComboCardProps {
+  combo: LoginCombo
+  tag: Tag | null | undefined
+  isActive: boolean
+  isLoading: boolean
+  isSuccess: boolean
+  isError: boolean
+  disabled: boolean
+  onClick: () => void
+}
+
+const ComboCard = memo(function ComboCard({
+  combo,
+  tag,
+  isActive,
+  isLoading,
+  isSuccess,
+  isError,
+  disabled,
+  onClick
+}: ComboCardProps) {
+  return (
+    <Button
+      data-testid={`combo-button-${combo.id}`}
+      variant="outline"
+      onClick={onClick}
+      disabled={disabled}
+      className={`group h-auto w-full justify-between whitespace-normal rounded-lg border-border px-3 py-2.5 text-left transition-all ${
+        isActive
+          ? "border-primary/60 bg-primary/5"
+          : "hover:border-primary/50 hover:bg-accent/40"
+      }`}>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+          {combo.pinned && (
+            <Pin
+              className="h-3.5 w-3.5 shrink-0 text-primary"
+              aria-label="已置顶"
+            />
+          )}
+          <span className="truncate">{combo.name}</span>
+        </div>
+        <div className="mt-1 flex flex-wrap items-center gap-1">
+          {tag ? (
+            <TagBadge tag={tag} />
+          ) : (
+            <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+              未设置
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="ml-2 flex shrink-0 items-center">
+        {isLoading && (
+          <Loader2
+            className="h-4 w-4 animate-spin text-primary"
+            aria-label="登录中"
+          />
+        )}
+        {isSuccess && (
+          <CheckCircle2
+            className="h-4 w-4 text-green-600 dark:text-green-400"
+            aria-label="成功"
+          />
+        )}
+        {isError && (
+          <AlertCircle
+            className="h-4 w-4 text-destructive"
+            aria-label="失败"
+          />
+        )}
+        {!isLoading && !isSuccess && !isError && (
+          <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        )}
+      </div>
+    </Button>
+  )
+})
+
 function PopupIndex() {
   const { t, language, setLanguage } = useTranslation()
   const { resolvedTheme, toggleTheme } = useTheme()
@@ -55,7 +134,14 @@ function PopupIndex() {
   const [loginStatus, setLoginStatus] = useState<LoginStatus>("idle")
   const [activeId, setActiveId] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string>("")
+  const [searchInput, setSearchInput] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
+
+  // search debounce: input 立即更新, query 200ms 后才触发过滤
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchQuery(searchInput), 200)
+    return () => clearTimeout(timer)
+  }, [searchInput])
 
   useEffect(() => {
     let cancelled = false
@@ -135,9 +221,17 @@ function PopupIndex() {
   const handleComboLogin = async (combo: LoginCombo) => {
     if (loginStatus === "loading") return
 
-    const casConfig = casMap.get(combo.casId)
-    const accountConfig = accMap.get(combo.accountId)
-    const callbackConfig = cbMap.get(combo.callbackId)
+    // settings 还没加载完时, 先 await 再读 map, 保证一致性
+    const liveSettings = settingsLoading ? await getAppSettings() : settings
+    const liveCasMap = new Map(liveSettings.casConfigs.map((c) => [c.id, c]))
+    const liveAccMap = new Map(liveSettings.accounts.map((a) => [a.id, a]))
+    const liveCbMap = new Map(
+      liveSettings.callbackConfigs.map((c) => [c.id, c])
+    )
+
+    const casConfig = liveCasMap.get(combo.casId)
+    const accountConfig = liveAccMap.get(combo.accountId)
+    const callbackConfig = liveCbMap.get(combo.callbackId)
 
     if (!casConfig || !accountConfig || !callbackConfig) {
       const msg = t("invalidConfiguration")
@@ -201,7 +295,7 @@ function PopupIndex() {
     }
   }
 
-  if (combosLoading || settingsLoading) {
+  if (combosLoading) {
     return (
       <div className="flex h-[420px] w-[340px] items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
@@ -369,16 +463,16 @@ function PopupIndex() {
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="搜索组合名称 / 标签"
                 className="h-8 pl-8 pr-8 text-xs"
                 data-testid="combo-search"
               />
-              {searchQuery && (
+              {searchInput && (
                 <button
                   type="button"
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => setSearchInput("")}
                   aria-label="清除搜索"
                   className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground">
                   <X className="h-3.5 w-3.5" />
@@ -417,78 +511,27 @@ function PopupIndex() {
               data-testid="combos-list"
               className="max-h-[280px] space-y-2 overflow-y-auto pr-1">
               {filteredCombos.map((combo) => {
-                const cas = casMap.get(combo.casId)
-                const acc = accMap.get(combo.accountId)
-                const cb = cbMap.get(combo.callbackId)
+                const effectiveTagId = combo.tagId ?? combo.tagIds?.[0]
+                const tag = effectiveTagId
+                  ? tagMap.get(effectiveTagId)
+                  : null
                 const isActive = activeId === combo.id
                 const isLoading = isActive && loginStatus === "loading"
                 const isSuccess = isActive && loginStatus === "success"
                 const isError = isActive && loginStatus === "error"
                 const disabled = loginStatus === "loading" && !isActive
                 return (
-                  <Button
+                  <ComboCard
                     key={combo.id}
-                    data-testid={`combo-button-${combo.id}`}
-                    variant="outline"
-                    onClick={() => handleComboLogin(combo)}
+                    combo={combo}
+                    tag={tag}
+                    isActive={isActive}
+                    isLoading={isLoading}
+                    isSuccess={isSuccess}
+                    isError={isError}
                     disabled={disabled}
-                    className={`group h-auto w-full justify-between whitespace-normal rounded-lg border-border px-3 py-2.5 text-left transition-all ${
-                      isActive
-                        ? "border-primary/60 bg-primary/5"
-                        : "hover:border-primary/50 hover:bg-accent/40"
-                    }`}>
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                        {combo.pinned && (
-                          <Pin
-                            className="h-3.5 w-3.5 shrink-0 text-primary"
-                            aria-label="已置顶"
-                          />
-                        )}
-                        <span className="truncate">{combo.name}</span>
-                      </div>
-                      <div className="mt-1 flex flex-wrap items-center gap-1">
-                        {(() => {
-                          const effectiveTagId =
-                            combo.tagId ?? combo.tagIds?.[0]
-                          const tag = effectiveTagId
-                            ? tagMap.get(effectiveTagId)
-                            : null
-                          if (tag) {
-                            return <TagBadge tag={tag} />
-                          }
-                          return (
-                            <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                              未设置
-                            </span>
-                          )
-                        })()}
-                      </div>
-                    </div>
-                    <div className="ml-2 flex shrink-0 items-center">
-                      {isLoading && (
-                        <Loader2
-                          className="h-4 w-4 animate-spin text-primary"
-                          aria-label="登录中"
-                        />
-                      )}
-                      {isSuccess && (
-                        <CheckCircle2
-                          className="h-4 w-4 text-green-600 dark:text-green-400"
-                          aria-label="成功"
-                        />
-                      )}
-                      {isError && (
-                        <AlertCircle
-                          className="h-4 w-4 text-destructive"
-                          aria-label="失败"
-                        />
-                      )}
-                      {!isLoading && !isSuccess && !isError && (
-                        <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-                      )}
-                    </div>
-                  </Button>
+                    onClick={() => handleComboLogin(combo)}
+                  />
                 )
               })}
             </div>
