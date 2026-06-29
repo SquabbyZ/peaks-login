@@ -1,3 +1,21 @@
+export type TagColor =
+  | "red"
+  | "orange"
+  | "yellow"
+  | "green"
+  | "blue"
+  | "purple"
+  | "pink"
+  | "gray"
+
+export interface Tag {
+  id: string
+  name: string
+  color: TagColor
+  createdAt: number
+  updatedAt: number
+}
+
 export interface CasConfig {
   id: string
   name: string
@@ -5,6 +23,7 @@ export interface CasConfig {
   usernameField?: string
   passwordField?: string
   tokenResponseKey?: string // 从 CAS 响应中获取 token 的 key
+  tagIds?: string[]
   createdAt: number
   updatedAt: number
 }
@@ -15,6 +34,7 @@ export interface CallbackConfig {
   url: string
   tokenKeys?: string[] // 存储 token 到 localStorage 的多个 key
   enableCors?: boolean // 是否启用跨域支持
+  tagIds?: string[]
   createdAt: number
   updatedAt: number
 }
@@ -24,6 +44,7 @@ export interface AccountConfig {
   name: string
   username: string
   encryptedPassword: string
+  tagIds?: string[]
   createdAt: number
   updatedAt: number
 }
@@ -33,6 +54,7 @@ export interface AppSettings {
   callbackConfigs: CallbackConfig[]
   accounts: AccountConfig[]
   combos?: LoginCombo[]
+  tags?: Tag[]
   masterKey?: string
 }
 
@@ -45,6 +67,7 @@ export interface LoginCombo {
   tokenKeyMappings?: Record<string, string> // ${callbackId}:${tokenKey} -> casId
   pinned?: boolean
   lastUsedAt?: number
+  tagIds?: string[]
   createdAt: number
   updatedAt: number
 }

@@ -52,7 +52,8 @@ import {
   CallbackDialogs,
   type CallbackFormData
 } from "~/options/dialogs/CallbackDialogs"
-import type { CallbackConfig } from "~/types"
+import { TagBadge } from "~/components/ui/tag-badge"
+import type { CallbackConfig, Tag } from "~/types"
 
 interface CallbackSectionProps {
   configs: CallbackConfig[]
@@ -64,13 +65,15 @@ interface CallbackSectionProps {
   onExport: () => void
   onImport: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void> | void
   copiedId: string | null
+  tags: Tag[]
 }
 
 const EMPTY_FORM: CallbackFormData = {
   name: "",
   url: "",
   tokenKeys: ["accessToken"],
-  enableCors: false
+  enableCors: false,
+  tagIds: []
 }
 
 export function CallbackSection({
@@ -82,7 +85,8 @@ export function CallbackSection({
   onCopy,
   onExport,
   onImport,
-  copiedId
+  copiedId,
+  tags
 }: CallbackSectionProps) {
   const [addingOpen, setAddingOpen] = useState(false)
   const [editing, setEditing] = useState<CallbackConfig | null>(null)
@@ -90,13 +94,26 @@ export function CallbackSection({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
 
+  const tagMap = useMemo(
+    () => new Map(tags.map((tag) => [tag.id, tag])),
+    [tags]
+  )
+
   const filteredCallback = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     if (!q) return configs
-    return configs.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.url.toLowerCase().includes(q)
-    )
-  }, [configs, searchQuery])
+    return configs.filter((c) => {
+      const tagNames = (c.tagIds ?? [])
+        .map((id) => tagMap.get(id)?.name ?? "")
+        .join(" ")
+        .toLowerCase()
+      return (
+        c.name.toLowerCase().includes(q) ||
+        c.url.toLowerCase().includes(q) ||
+        tagNames.includes(q)
+      )
+    })
+  }, [configs, searchQuery, tagMap])
 
   const openEdit = (cb: CallbackConfig) => {
     setEditing(cb)
@@ -104,7 +121,8 @@ export function CallbackSection({
       name: cb.name,
       url: cb.url,
       tokenKeys: cb.tokenKeys || ["accessToken"],
-      enableCors: cb.enableCors || false
+      enableCors: cb.enableCors || false,
+      tagIds: cb.tagIds ?? []
     })
   }
 
@@ -200,6 +218,9 @@ export function CallbackSection({
                   <TableHead className="sticky top-0 z-10 max-w-[200px] whitespace-nowrap bg-card">
                     {t("callbackUrl")}
                   </TableHead>
+                  <TableHead className="sticky top-0 z-10 max-w-[120px] whitespace-nowrap bg-card">
+                    标签
+                  </TableHead>
                   <TableHead className="sticky top-0 z-10 max-w-[200px] whitespace-nowrap bg-card">
                     {t("tokenKeys")}
                   </TableHead>
@@ -212,13 +233,24 @@ export function CallbackSection({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCallback.map((cb) => (
+                {filteredCallback.map((cb) => {
+                  const cbTags = (cb.tagIds ?? [])
+                    .map((id) => tagMap.get(id))
+                    .filter((tg): tg is NonNullable<typeof tg> => Boolean(tg))
+                  return (
                   <TableRow key={cb.id}>
                     <TableCell className="max-w-[150px] truncate font-medium">
                       {cb.name}
                     </TableCell>
                     <TableCell className="max-w-[200px] truncate text-muted-foreground">
                       {cb.url}
+                    </TableCell>
+                    <TableCell className="max-w-[120px]">
+                      <span className="inline-flex flex-wrap items-center gap-1">
+                        {cbTags.map((tg) => (
+                          <TagBadge key={tg.id} tag={tg} />
+                        ))}
+                      </span>
                     </TableCell>
                     <TableCell className="max-w-[200px] truncate text-muted-foreground">
                       {cb.tokenKeys?.join(", ") || "accessToken"}
@@ -288,7 +320,8 @@ export function CallbackSection({
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))}
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
@@ -308,6 +341,7 @@ export function CallbackSection({
         onAdd={handleAdd}
         onSaveEdit={handleSaveEdit}
         t={t}
+        tags={tags}
       />
     </Card>
   )

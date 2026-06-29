@@ -35,7 +35,8 @@ const baseProps = {
   onDelete: noop,
   onCopy: noop,
   copiedId: null,
-  masterKey: ""
+  masterKey: "",
+  tags: []
 }
 
 describe("AccountSection table scroll wrapper", () => {

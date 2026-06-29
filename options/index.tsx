@@ -4,7 +4,8 @@ import type {
   AccountConfig,
   AppSettings,
   CallbackConfig,
-  CasConfig
+  CasConfig,
+  Tag
 } from "~/types"
 
 import "~/style.css"
@@ -19,6 +20,7 @@ import {
   Settings,
   Shield,
   Sun,
+  Tag as TagIcon,
   Trash2,
   Upload,
   User
@@ -79,6 +81,7 @@ import { AccountSection } from "~/options/sections/AccountSection"
 import { CallbackSection } from "~/options/sections/CallbackSection"
 import { CasSection } from "~/options/sections/CasSection"
 import { CombosSection } from "~/options/sections/CombosSection"
+import { TagsSection, type TagFormData } from "~/options/sections/TagsSection"
 
 function OptionsIndex() {
   const { t, language, setLanguage } = useTranslation()
@@ -88,11 +91,12 @@ function OptionsIndex() {
   const [settings, setSettings] = useState<AppSettings>({
     casConfigs: [],
     callbackConfigs: [],
-    accounts: []
+    accounts: [],
+    tags: []
   })
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<
-    "combos" | "cas" | "callback" | "account"
+    "combos" | "cas" | "callback" | "account" | "tags"
   >(() => {
     // 从 URL hash 读取初始 tab (e.g. popup 跳转 #combos)
     if (typeof window !== "undefined" && window.location.hash) {
@@ -101,7 +105,8 @@ function OptionsIndex() {
         hash === "combos" ||
         hash === "cas" ||
         hash === "callback" ||
-        hash === "account"
+        hash === "account" ||
+        hash === "tags"
       ) {
         return hash
       }
@@ -113,8 +118,22 @@ function OptionsIndex() {
   const [clearOpen, setClearOpen] = useState(false)
   const { combos } = useCombos()
 
+  const buildDefaultTags = (): Tag[] => {
+    const now = createTimestamp()
+    return [
+      { id: "default-prod", name: "线上", color: "green", createdAt: now, updatedAt: now },
+      { id: "default-dev", name: "开发", color: "blue", createdAt: now, updatedAt: now },
+      { id: "default-test", name: "测试", color: "purple", createdAt: now, updatedAt: now }
+    ]
+  }
+
   const loadSettings = useCallback(async () => {
     const loaded = await getAppSettings()
+    // 注入默认 tag, 首次加载或老用户没有 tag 时
+    if (!loaded.tags || loaded.tags.length === 0) {
+      loaded.tags = buildDefaultTags()
+      await setAppSettings(loaded)
+    }
     setSettings(loaded)
     const key = await getMasterKey()
     if (key) setMasterKeyString(key)
@@ -196,10 +215,13 @@ function OptionsIndex() {
     } else if (tab === "account") {
       updated.accounts = []
       label = "账号"
+    } else if (tab === "tags") {
+      updated.tags = buildDefaultTags()
+      label = "标签"
     }
     await setAppSettings(updated)
     setSettings(updated)
-    toast({ title: t("success"), description: `已清空所有${label}` })
+    toast({ title: t("success"), description: `已重置${label}` })
   }
 
   // 当前 tab 的数据条数, 0 时隐藏清空按钮
@@ -210,7 +232,9 @@ function OptionsIndex() {
         ? settings.casConfigs.length
         : activeTab === "callback"
           ? settings.callbackConfigs.length
-          : settings.accounts.length
+          : activeTab === "tags"
+            ? (settings.tags ?? []).length
+            : settings.accounts.length
 
   // 一键导入所有数据, 覆盖当前
   const importAll = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -254,6 +278,7 @@ function OptionsIndex() {
       usernameField: data.usernameField || "email",
       passwordField: data.passwordField || "password",
       tokenResponseKey: data.tokenResponseKey || "token",
+      tagIds: data.tagIds ?? [],
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
@@ -281,6 +306,7 @@ function OptionsIndex() {
               usernameField: data.usernameField || "email",
               passwordField: data.passwordField || "password",
               tokenResponseKey: data.tokenResponseKey || "token",
+              tagIds: data.tagIds ?? c.tagIds ?? [],
               updatedAt: createTimestamp()
             }
           : c
@@ -315,6 +341,7 @@ function OptionsIndex() {
       usernameField: cas.usernameField || "email",
       passwordField: cas.passwordField || "password",
       tokenResponseKey: cas.tokenResponseKey || "token",
+      tagIds: cas.tagIds ? [...cas.tagIds] : [],
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
@@ -376,6 +403,7 @@ function OptionsIndex() {
       url: data.url,
       tokenKeys: data.tokenKeys.filter((k) => k.trim() !== ""),
       enableCors: data.enableCors,
+      tagIds: data.tagIds ?? [],
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
@@ -402,6 +430,7 @@ function OptionsIndex() {
               url: data.url,
               tokenKeys: data.tokenKeys.filter((k) => k.trim() !== ""),
               enableCors: data.enableCors,
+              tagIds: data.tagIds ?? c.tagIds ?? [],
               updatedAt: createTimestamp()
             }
           : c
@@ -435,6 +464,7 @@ function OptionsIndex() {
       url: cb.url,
       tokenKeys: cb.tokenKeys || ["accessToken"],
       enableCors: cb.enableCors || false,
+      tagIds: cb.tagIds ? [...cb.tagIds] : [],
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
@@ -509,6 +539,7 @@ function OptionsIndex() {
       name: data.name,
       username: data.username,
       encryptedPassword: JSON.stringify(encrypted),
+      tagIds: data.tagIds ?? [],
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
@@ -530,6 +561,7 @@ function OptionsIndex() {
               ...a,
               name: data.name,
               username: data.username,
+              tagIds: data.tagIds ?? a.tagIds ?? [],
               updatedAt: createTimestamp()
             }
           : a
@@ -557,6 +589,7 @@ function OptionsIndex() {
       name: `${acc.name} (${t("copy")})`,
       username: acc.username,
       encryptedPassword: acc.encryptedPassword,
+      tagIds: acc.tagIds ? [...acc.tagIds] : [],
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
@@ -564,6 +597,59 @@ function OptionsIndex() {
     await setAppSettings(updated)
     setSettings(updated)
     await copyToClipboard(acc.username, newConfig.id)
+  }
+  const handleAddTag = async (data: TagFormData) => {
+    const now = createTimestamp()
+    const tag: Tag = {
+      id: generateId(),
+      name: data.name.trim(),
+      color: data.color,
+      createdAt: now,
+      updatedAt: now
+    }
+    const updated = { ...settings, tags: [...(settings.tags ?? []), tag] }
+    await setAppSettings(updated)
+    setSettings(updated)
+    toast({
+      title: t("success"),
+      description: "标签已创建",
+      variant: "success"
+    })
+  }
+  const handleEditTag = async (id: string, data: TagFormData) => {
+    const updated = {
+      ...settings,
+      tags: (settings.tags ?? []).map((tag) =>
+        tag.id === id
+          ? {
+              ...tag,
+              name: data.name.trim(),
+              color: data.color,
+              updatedAt: createTimestamp()
+            }
+          : tag
+      )
+    }
+    await setAppSettings(updated)
+    setSettings(updated)
+    toast({
+      title: t("success"),
+      description: "标签已更新",
+      variant: "success"
+    })
+  }
+  const handleDeleteTag = async (id: string) => {
+    const updated = {
+      ...settings,
+      tags: (settings.tags ?? []).filter((tag) => tag.id !== id)
+    }
+    await setAppSettings(updated)
+    setSettings(updated)
+    toast({
+      title: t("success"),
+      description: "标签已删除",
+      variant: "success"
+    })
   }
 
   if (loading) {
@@ -696,7 +782,9 @@ function OptionsIndex() {
             <Tabs
               value={activeTab}
               onValueChange={(v) =>
-                setActiveTab(v as "combos" | "cas" | "callback" | "account")
+                setActiveTab(
+                  v as "combos" | "cas" | "callback" | "account" | "tags"
+                )
               }
               className="w-full">
               <div className="flex items-center justify-between gap-2">
@@ -745,6 +833,17 @@ function OptionsIndex() {
                       </span>
                     )}
                   </TabsTrigger>
+                  <TabsTrigger value="tags">
+                    <TagIcon className="mr-2 h-4 w-4" />
+                    标签管理
+                    {(settings.tags ?? []).length > 0 && (
+                      <span
+                        data-testid="tags-tab-badge"
+                        className="ml-2 rounded-full bg-primary px-2 text-xs text-primary-foreground">
+                        {(settings.tags ?? []).length}
+                      </span>
+                    )}
+                  </TabsTrigger>
                 </TabsList>
                 {activeTabCount > 0 && (
                   <TooltipProvider>
@@ -769,7 +868,9 @@ function OptionsIndex() {
                               ? "CAS 登录地址"
                               : activeTab === "callback"
                                 ? "回调地址"
-                                : "账号"}
+                                : activeTab === "tags"
+                                  ? "标签"
+                                  : "账号"}
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -789,7 +890,9 @@ function OptionsIndex() {
                           ? "所有 CAS 登录地址"
                           : activeTab === "callback"
                             ? "所有回调地址"
-                            : "所有账号"}
+                            : activeTab === "tags"
+                              ? "所有标签"
+                              : "所有账号"}
                       。 此操作不可撤销。
                     </AlertDialogDescription>
                   </AlertDialogHeader>
@@ -820,6 +923,7 @@ function OptionsIndex() {
                   onExport={exportCas}
                   onImport={importCas}
                   copiedId={copiedId}
+                  tags={settings.tags ?? []}
                 />
               </TabsContent>
               <TabsContent value="callback">
@@ -833,6 +937,7 @@ function OptionsIndex() {
                   onExport={exportCallback}
                   onImport={importCallback}
                   copiedId={copiedId}
+                  tags={settings.tags ?? []}
                 />
               </TabsContent>
               <TabsContent value="account">
@@ -845,6 +950,16 @@ function OptionsIndex() {
                   onCopy={handleCopyAccount}
                   copiedId={copiedId}
                   masterKey={masterKeyString}
+                  tags={settings.tags ?? []}
+                />
+              </TabsContent>
+              <TabsContent value="tags">
+                <TagsSection
+                  tags={settings.tags ?? []}
+                  t={t}
+                  onAdd={handleAddTag}
+                  onEdit={handleEditTag}
+                  onDelete={handleDeleteTag}
                 />
               </TabsContent>
             </Tabs>

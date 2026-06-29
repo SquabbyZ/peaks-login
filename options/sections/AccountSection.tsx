@@ -50,7 +50,8 @@ import {
   AccountDialogs,
   type AccountFormData
 } from "~/options/dialogs/AccountDialogs"
-import type { AccountConfig } from "~/types"
+import { TagBadge } from "~/components/ui/tag-badge"
+import type { AccountConfig, Tag } from "~/types"
 
 interface AccountSectionProps {
   accounts: AccountConfig[]
@@ -61,13 +62,20 @@ interface AccountSectionProps {
   onCopy: (config: AccountConfig) => Promise<void> | void
   copiedId: string | null
   masterKey: string
+  tags: Tag[]
 }
 
-const EMPTY_FORM: AccountFormData = { name: "", username: "", password: "" }
+const EMPTY_FORM: AccountFormData = {
+  name: "",
+  username: "",
+  password: "",
+  tagIds: []
+}
 const EMPTY_EDIT_FORM: AccountFormData = {
   name: "",
   username: "",
-  password: ""
+  password: "",
+  tagIds: []
 }
 
 export function AccountSection({
@@ -78,7 +86,8 @@ export function AccountSection({
   onDelete,
   onCopy,
   copiedId,
-  masterKey
+  masterKey,
+  tags
 }: AccountSectionProps) {
   const [addingOpen, setAddingOpen] = useState(false)
   const [editing, setEditing] = useState<AccountConfig | null>(null)
@@ -86,18 +95,35 @@ export function AccountSection({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
 
+  const tagMap = useMemo(
+    () => new Map(tags.map((tag) => [tag.id, tag])),
+    [tags]
+  )
+
   const filteredAccounts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     if (!q) return accounts
-    return accounts.filter(
-      (a) =>
-        a.name.toLowerCase().includes(q) || a.username.toLowerCase().includes(q)
-    )
-  }, [accounts, searchQuery])
+    return accounts.filter((a) => {
+      const tagNames = (a.tagIds ?? [])
+        .map((id) => tagMap.get(id)?.name ?? "")
+        .join(" ")
+        .toLowerCase()
+      return (
+        a.name.toLowerCase().includes(q) ||
+        a.username.toLowerCase().includes(q) ||
+        tagNames.includes(q)
+      )
+    })
+  }, [accounts, searchQuery, tagMap])
 
   const openEdit = (acc: AccountConfig) => {
     setEditing(acc)
-    setForm({ ...EMPTY_EDIT_FORM, name: acc.name, username: acc.username })
+    setForm({
+      ...EMPTY_EDIT_FORM,
+      name: acc.name,
+      username: acc.username,
+      tagIds: acc.tagIds ?? []
+    })
   }
 
   const handleAdd = async (data: AccountFormData) => {
@@ -173,6 +199,9 @@ export function AccountSection({
                   <TableHead className="sticky top-0 z-10 max-w-[150px] whitespace-nowrap bg-card">
                     {t("accountUsername")}
                   </TableHead>
+                  <TableHead className="sticky top-0 z-10 max-w-[120px] whitespace-nowrap bg-card">
+                    标签
+                  </TableHead>
                   <TableHead className="sticky top-0 z-10 max-w-[150px] whitespace-nowrap bg-card">
                     {t("accountPassword")}
                   </TableHead>
@@ -182,13 +211,24 @@ export function AccountSection({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredAccounts.map((acc) => (
+                {filteredAccounts.map((acc) => {
+                  const accTags = (acc.tagIds ?? [])
+                    .map((id) => tagMap.get(id))
+                    .filter((tg): tg is NonNullable<typeof tg> => Boolean(tg))
+                  return (
                   <TableRow key={acc.id}>
                     <TableCell className="max-w-[150px] truncate font-medium">
                       {acc.name}
                     </TableCell>
                     <TableCell className="max-w-[150px] truncate">
                       {acc.username}
+                    </TableCell>
+                    <TableCell className="max-w-[120px]">
+                      <span className="inline-flex flex-wrap items-center gap-1">
+                        {accTags.map((tg) => (
+                          <TagBadge key={tg.id} tag={tg} />
+                        ))}
+                      </span>
                     </TableCell>
                     <TableCell className="max-w-[150px] text-muted-foreground">
                       {t("passwordEncrypted")}
@@ -255,7 +295,8 @@ export function AccountSection({
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))}
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
@@ -276,6 +317,7 @@ export function AccountSection({
         onSaveEdit={handleSaveEdit}
         t={t}
         masterKey={masterKey}
+        tags={tags}
       />
     </Card>
   )

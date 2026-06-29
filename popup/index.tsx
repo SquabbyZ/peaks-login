@@ -6,6 +6,7 @@ import { Button } from "~/components/ui/button"
 import { Card, CardContent } from "~/components/ui/card"
 import { Input } from "~/components/ui/input"
 import { Toaster } from "~/components/ui/toaster"
+import { TagBadge } from "~/components/ui/tag-badge"
 import {
   Tooltip,
   TooltipContent,
@@ -35,7 +36,7 @@ import {
   X
 } from "lucide-react"
 
-import type { AppSettings, LoginCombo } from "~/types"
+import type { AppSettings, LoginCombo, Tag } from "~/types"
 
 type LoginStatus = "idle" | "loading" | "success" | "error"
 
@@ -104,6 +105,10 @@ function PopupIndex() {
     () => new Map(settings.callbackConfigs.map((c) => [c.id, c])),
     [settings.callbackConfigs]
   )
+  const tagMap = useMemo(
+    () => new Map((settings.tags ?? []).map((t: Tag) => [t.id, t])),
+    [settings.tags]
+  )
 
   // 排序: 置顶在前, 然后按最近使用倒序, 没有 lastUsedAt 的排最后
   const sortedCombos = useMemo(() => {
@@ -122,17 +127,13 @@ function PopupIndex() {
     const q = searchQuery.trim().toLowerCase()
     if (!q) return sortedCombos
     return sortedCombos.filter((c) => {
-      const cas = casMap.get(c.casId)
-      const acc = accMap.get(c.accountId)
-      const cb = cbMap.get(c.callbackId)
-      return (
-        c.name.toLowerCase().includes(q) ||
-        cas?.name.toLowerCase().includes(q) ||
-        acc?.username.toLowerCase().includes(q) ||
-        cb?.name.toLowerCase().includes(q)
-      )
+      const tagNames = (c.tagIds ?? [])
+        .map((id) => tagMap.get(id)?.name ?? "")
+        .join(" ")
+        .toLowerCase()
+      return c.name.toLowerCase().includes(q) || tagNames.includes(q)
     })
-  }, [sortedCombos, searchQuery, casMap, accMap, cbMap])
+  }, [sortedCombos, searchQuery, tagMap])
 
   const handleComboLogin = async (combo: LoginCombo) => {
     if (loginStatus === "loading") return
@@ -385,7 +386,7 @@ function PopupIndex() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索组合名称 / CAS / 账号 / 回调"
+                placeholder="搜索组合名称 / 标签"
                 className="h-8 pl-8 pr-8 text-xs"
                 data-testid="combo-search"
               />
@@ -461,31 +462,17 @@ function PopupIndex() {
                         )}
                         <span className="truncate">{combo.name}</span>
                       </div>
-                      <div className="space-y-0.5 text-xs text-muted-foreground">
-                        <div
-                          className="truncate"
-                          title={cas?.name ?? "已删除"}>
-                          <span className="font-medium text-foreground/70">
-                            CAS
-                          </span>{" "}
-                          {cas?.name ?? "已删除"}
-                        </div>
-                        <div
-                          className="truncate"
-                          title={acc?.username ?? "已删除"}>
-                          <span className="font-medium text-foreground/70">
-                            账号
-                          </span>{" "}
-                          {acc?.username ?? "已删除"}
-                        </div>
-                        <div
-                          className="truncate"
-                          title={cb?.name ?? "已删除"}>
-                          <span className="font-medium text-foreground/70">
-                            回调
-                          </span>{" "}
-                          {cb?.name ?? "已删除"}
-                        </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        {(combo.tagIds ?? []).length > 0 ? (
+                          (combo.tagIds ?? [])
+                            .map((id) => tagMap.get(id))
+                            .filter((t): t is Tag => Boolean(t))
+                            .map((tag) => <TagBadge key={tag.id} tag={tag} />)
+                        ) : (
+                          <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                            未设置
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="ml-2 flex shrink-0 items-center">

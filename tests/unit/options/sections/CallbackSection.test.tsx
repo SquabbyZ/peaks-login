@@ -37,7 +37,8 @@ const baseProps = {
   onCopy: noop,
   onExport: noop,
   onImport: noop,
-  copiedId: null
+  copiedId: null,
+  tags: []
 }
 
 describe("CallbackSection table scroll wrapper", () => {

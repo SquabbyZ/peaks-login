@@ -11,7 +11,8 @@ import {
 } from "~/components/ui/dialog"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
-import type { CasConfig } from "~/types"
+import { TagMultiSelect } from "~/components/ui/tag-picker"
+import type { CasConfig, Tag } from "~/types"
 
 export interface CasFormData {
   name: string
@@ -19,6 +20,7 @@ export interface CasFormData {
   usernameField: string
   passwordField: string
   tokenResponseKey: string
+  tagIds: string[]
 }
 
 interface CasDialogsProps {
@@ -31,6 +33,7 @@ interface CasDialogsProps {
   onAdd: (data: CasFormData) => Promise<void> | void
   onSaveEdit: () => Promise<void> | void
   t: (key: string) => string
+  tags: Tag[]
 }
 
 export function CasDialogs({
@@ -42,7 +45,8 @@ export function CasDialogs({
   setForm,
   onAdd,
   onSaveEdit,
-  t
+  t,
+  tags
 }: CasDialogsProps) {
   return (
     <>
@@ -70,6 +74,15 @@ export function CasDialogs({
                   placeholder={t("casUrlPlaceholder")}
                   value={form.url}
                   onChange={(e) => setForm({ ...form, url: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2.5">
+                <Label>标签</Label>
+                <TagMultiSelect
+                  tags={tags}
+                  value={form.tagIds ?? []}
+                  onChange={(next) => setForm({ ...form, tagIds: next })}
+                  testId="new-cas-tags"
                 />
               </div>
             </div>
@@ -149,6 +162,15 @@ export function CasDialogs({
                 id="edit-cas-url"
                 value={form.url}
                 onChange={(e) => setForm({ ...form, url: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>标签</Label>
+              <TagMultiSelect
+                tags={tags}
+                value={form.tagIds ?? []}
+                onChange={(next) => setForm({ ...form, tagIds: next })}
+                testId="edit-cas-tags"
               />
             </div>
             <div className="grid gap-2">

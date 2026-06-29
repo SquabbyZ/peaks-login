@@ -54,7 +54,8 @@ import {
   TooltipTrigger
 } from "~/components/ui/tooltip"
 import { CasDialogs, type CasFormData } from "~/options/dialogs/CasDialogs"
-import type { CasConfig } from "~/types"
+import type { CasConfig, Tag } from "~/types"
+import { TagBadge } from "~/components/ui/tag-badge"
 
 interface CasSectionProps {
   configs: CasConfig[]
@@ -66,6 +67,7 @@ interface CasSectionProps {
   onExport: () => void
   onImport: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void> | void
   copiedId: string | null
+  tags: Tag[]
 }
 
 const EMPTY_FORM: CasFormData = {
@@ -73,7 +75,8 @@ const EMPTY_FORM: CasFormData = {
   url: "",
   usernameField: "email",
   passwordField: "password",
-  tokenResponseKey: "token"
+  tokenResponseKey: "token",
+  tagIds: []
 }
 
 export function CasSection({
@@ -85,7 +88,8 @@ export function CasSection({
   onCopy,
   onExport,
   onImport,
-  copiedId
+  copiedId,
+  tags
 }: CasSectionProps) {
   const [addingOpen, setAddingOpen] = useState(false)
   const [editing, setEditing] = useState<CasConfig | null>(null)
@@ -93,13 +97,26 @@ export function CasSection({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
 
+  const tagMap = useMemo(
+    () => new Map(tags.map((tag) => [tag.id, tag])),
+    [tags]
+  )
+
   const filteredCas = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     if (!q) return configs
-    return configs.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.url.toLowerCase().includes(q)
-    )
-  }, [configs, searchQuery])
+    return configs.filter((c) => {
+      const tagNames = (c.tagIds ?? [])
+        .map((id) => tagMap.get(id)?.name ?? "")
+        .join(" ")
+        .toLowerCase()
+      return (
+        c.name.toLowerCase().includes(q) ||
+        c.url.toLowerCase().includes(q) ||
+        tagNames.includes(q)
+      )
+    })
+  }, [configs, searchQuery, tagMap])
 
   const openEdit = (cas: CasConfig) => {
     setEditing(cas)
@@ -108,7 +125,8 @@ export function CasSection({
       url: cas.url,
       usernameField: cas.usernameField || "email",
       passwordField: cas.passwordField || "password",
-      tokenResponseKey: cas.tokenResponseKey || "token"
+      tokenResponseKey: cas.tokenResponseKey || "token",
+      tagIds: cas.tagIds ?? []
     })
   }
 
@@ -205,6 +223,9 @@ export function CasSection({
                     {t("casUrl")}
                   </TableHead>
                   <TableHead className="sticky top-0 z-10 max-w-[120px] whitespace-nowrap bg-card">
+                    标签
+                  </TableHead>
+                  <TableHead className="sticky top-0 z-10 max-w-[120px] whitespace-nowrap bg-card">
                     {t("usernameField")}
                   </TableHead>
                   <TableHead className="sticky top-0 z-10 max-w-[120px] whitespace-nowrap bg-card">
@@ -219,13 +240,24 @@ export function CasSection({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredCas.map((cas) => (
+                {filteredCas.map((cas) => {
+                  const casTags = (cas.tagIds ?? [])
+                    .map((id) => tagMap.get(id))
+                    .filter((tg): tg is NonNullable<typeof tg> => Boolean(tg))
+                  return (
                   <TableRow key={cas.id}>
                     <TableCell className="max-w-[150px] truncate font-medium">
                       {cas.name}
                     </TableCell>
                     <TableCell className="max-w-[170px] truncate text-muted-foreground">
                       {cas.url}
+                    </TableCell>
+                    <TableCell className="max-w-[120px]">
+                      <span className="inline-flex flex-wrap items-center gap-1">
+                        {casTags.map((tg) => (
+                          <TagBadge key={tg.id} tag={tg} />
+                        ))}
+                      </span>
                     </TableCell>
                     <TableCell className="max-w-[120px] truncate">
                       {cas.usernameField || "email"}
@@ -298,7 +330,8 @@ export function CasSection({
                       </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                ))}
+                  )
+                })}
               </TableBody>
             </Table>
           </div>
@@ -318,6 +351,7 @@ export function CasSection({
         onAdd={handleAdd}
         onSaveEdit={handleSaveEdit}
         t={t}
+        tags={tags}
       />
     </Card>
   )

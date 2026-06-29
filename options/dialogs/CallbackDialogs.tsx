@@ -13,13 +13,15 @@ import {
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
 import { Switch } from "~/components/ui/switch"
-import type { CallbackConfig } from "~/types"
+import { TagMultiSelect } from "~/components/ui/tag-picker"
+import type { CallbackConfig, Tag } from "~/types"
 
 export interface CallbackFormData {
   name: string
   url: string
   tokenKeys: string[]
   enableCors: boolean
+  tagIds: string[]
 }
 
 interface CallbackDialogsProps {
@@ -32,6 +34,7 @@ interface CallbackDialogsProps {
   onAdd: (data: CallbackFormData) => Promise<void> | void
   onSaveEdit: () => Promise<void> | void
   t: (key: string) => string
+  tags: Tag[]
 }
 
 function TokenKeysEditor({
@@ -117,7 +120,8 @@ export function CallbackDialogs({
   setForm,
   onAdd,
   onSaveEdit,
-  t
+  t,
+  tags
 }: CallbackDialogsProps) {
   return (
     <>
@@ -145,6 +149,15 @@ export function CallbackDialogs({
                   placeholder={t("callbackUrlPlaceholder")}
                   value={form.url}
                   onChange={(e) => setForm({ ...form, url: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2.5">
+                <Label>标签</Label>
+                <TagMultiSelect
+                  tags={tags}
+                  value={form.tagIds ?? []}
+                  onChange={(next) => setForm({ ...form, tagIds: next })}
+                  testId="new-callback-tags"
                 />
               </div>
             </div>
@@ -195,6 +208,15 @@ export function CallbackDialogs({
                 id="edit-callback-url"
                 value={form.url}
                 onChange={(e) => setForm({ ...form, url: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>标签</Label>
+              <TagMultiSelect
+                tags={tags}
+                value={form.tagIds ?? []}
+                onChange={(next) => setForm({ ...form, tagIds: next })}
+                testId="edit-callback-tags"
               />
             </div>
             <TokenKeysEditor

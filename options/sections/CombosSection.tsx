@@ -61,6 +61,8 @@ import {
   TableHeader,
   TableRow
 } from "~/components/ui/table"
+import { TagBadge } from "~/components/ui/tag-badge"
+import { TagMultiSelect } from "~/components/ui/tag-picker"
 import { createTimestamp, generateId } from "~/lib/storage"
 import { useCombos } from "~/lib/useCombos"
 import type {
@@ -77,6 +79,7 @@ interface CombosSectionProps {
 
 interface ComboDraft {
   name: string
+  tagIds: string[]
   casId: string
   accountId: string
   callbackId: string
@@ -85,6 +88,7 @@ interface ComboDraft {
 
 const EMPTY_DRAFT: ComboDraft = {
   name: "",
+  tagIds: [],
   casId: "",
   accountId: "",
   callbackId: "",
@@ -104,6 +108,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
   const casList: CasConfig[] = settings.casConfigs ?? []
   const accList: AccountConfig[] = settings.accounts ?? []
   const cbList: CallbackConfig[] = settings.callbackConfigs ?? []
+  const tagList = settings.tags ?? []
   const ready = casList.length > 0 && accList.length > 0 && cbList.length > 0
 
   // 自动 reset 错误
@@ -124,6 +129,10 @@ export function CombosSection({ settings }: CombosSectionProps) {
     [accList]
   )
   const cbMap = useMemo(() => new Map(cbList.map((c) => [c.id, c])), [cbList])
+  const tagMap = useMemo(
+    () => new Map(tagList.map((tag) => [tag.id, tag])),
+    [tagList]
+  )
 
   const openCreate = () => {
     setEditingId(null)
@@ -136,6 +145,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
     setEditingId(combo.id)
     setDraft({
       name: combo.name,
+      tagIds: combo.tagIds ?? [],
       casId: combo.casId,
       accountId: combo.accountId,
       callbackId: combo.callbackId,
@@ -167,6 +177,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
     const next: LoginCombo = {
       id: editingId ?? generateId(),
       name,
+      tagIds: draft.tagIds,
       casId: draft.casId,
       accountId: draft.accountId,
       callbackId: draft.callbackId,
@@ -185,6 +196,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
     const next: LoginCombo = {
       id: generateId(),
       name: `${combo.name} (副本)`,
+      tagIds: combo.tagIds ? [...combo.tagIds] : [],
       casId: combo.casId,
       accountId: combo.accountId,
       callbackId: combo.callbackId,
@@ -224,7 +236,7 @@ export function CombosSection({ settings }: CombosSectionProps) {
     [combos]
   )
 
-  // 搜索过滤: 匹配组合名 / CAS 名 / 账号名 / 回调名
+  // 搜索过滤: 匹配组合名 / 标签名 / CAS 名 / 账号名 / 回调名
   const filteredCombos = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     if (!q) return sortedCombos
@@ -232,15 +244,34 @@ export function CombosSection({ settings }: CombosSectionProps) {
       const cas = casMap.get(combo.casId)
       const acc = accMap.get(combo.accountId)
       const cb = cbMap.get(combo.callbackId)
+      const tagNames = (combo.tagIds ?? [])
+        .map((id) => tagMap.get(id)?.name ?? "")
+        .join(" ")
+        .toLowerCase()
       return (
         combo.name.toLowerCase().includes(q) ||
+        tagNames.includes(q) ||
         (cas?.name ?? "").toLowerCase().includes(q) ||
         (acc?.name ?? "").toLowerCase().includes(q) ||
         (acc?.username ?? "").toLowerCase().includes(q) ||
         (cb?.name ?? "").toLowerCase().includes(q)
       )
     })
-  }, [sortedCombos, searchQuery, casMap, accMap, cbMap])
+  }, [sortedCombos, searchQuery, casMap, accMap, cbMap, tagMap])
+
+  const renderTags = (combo: LoginCombo) => {
+    const tags = (combo.tagIds ?? [])
+      .map((id) => tagMap.get(id))
+      .filter((t): t is NonNullable<typeof t> => Boolean(t))
+    if (tags.length === 0) return null
+    return (
+      <span className="ml-1 inline-flex flex-wrap items-center gap-1">
+        {tags.map((tag) => (
+          <TagBadge key={tag.id} tag={tag} />
+        ))}
+      </span>
+    )
+  }
 
   return (
     <Card id="section-combos" data-testid="section-combos">
@@ -298,6 +329,15 @@ export function CombosSection({ settings }: CombosSectionProps) {
                   placeholder="如:开发 / 生产 / 测试"
                   value={draft.name}
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5 md:col-span-2">
+                <Label>标签</Label>
+                <TagMultiSelect
+                  tags={tagList}
+                  value={draft.tagIds}
+                  onChange={(next) => setDraft({ ...draft, tagIds: next })}
+                  testId="combo-tags"
                 />
               </div>
               <div className="space-y-1.5">
@@ -508,8 +548,8 @@ export function CombosSection({ settings }: CombosSectionProps) {
                   <Table className="border-separate border-spacing-0">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="sticky top-0 z-10 max-w-[160px] whitespace-nowrap bg-card">
-                          名称
+                        <TableHead className="sticky top-0 z-10 max-w-[200px] whitespace-nowrap bg-card">
+                          名称 / 标签
                         </TableHead>
                         <TableHead className="sticky top-0 z-10 max-w-[140px] whitespace-nowrap bg-card">
                           CAS
@@ -534,15 +574,18 @@ export function CombosSection({ settings }: CombosSectionProps) {
                           <TableRow
                             key={combo.id}
                             data-testid={`combos-row-${combo.id}`}>
-                            <TableCell className="max-w-[160px] truncate font-medium">
-                              <div className="flex items-center gap-1">
-                                {combo.pinned && (
-                                  <Pin
-                                    className="h-3.5 w-3.5 shrink-0 text-primary"
-                                    aria-label="已置顶"
-                                  />
-                                )}
-                                <span className="truncate">{combo.name}</span>
+                            <TableCell className="max-w-[200px] font-medium">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-1">
+                                  {combo.pinned && (
+                                    <Pin
+                                      className="h-3.5 w-3.5 shrink-0 text-primary"
+                                      aria-label="已置顶"
+                                    />
+                                  )}
+                                  <span className="truncate">{combo.name}</span>
+                                </div>
+                                {renderTags(combo)}
                               </div>
                             </TableCell>
                             <TableCell className="max-w-[140px] truncate text-muted-foreground">

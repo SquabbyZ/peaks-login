@@ -38,7 +38,8 @@ const baseProps = {
   onCopy: noop,
   onExport: noop,
   onImport: noop,
-  copiedId: null
+  copiedId: null,
+  tags: []
 }
 
 describe("CasSection table scroll wrapper", () => {

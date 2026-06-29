@@ -12,13 +12,15 @@ import {
 } from "~/components/ui/dialog"
 import { Input } from "~/components/ui/input"
 import { Label } from "~/components/ui/label"
+import { TagMultiSelect } from "~/components/ui/tag-picker"
 import { decrypt, importKey } from "~/lib/crypto"
-import type { AccountConfig } from "~/types"
+import type { AccountConfig, Tag } from "~/types"
 
 export interface AccountFormData {
   name: string
   username: string
   password?: string
+  tagIds: string[]
 }
 
 interface AccountDialogsProps {
@@ -32,6 +34,7 @@ interface AccountDialogsProps {
   onSaveEdit: () => Promise<void> | void
   t: (key: string) => string
   masterKey: string
+  tags: Tag[]
 }
 
 export function AccountDialogs({
@@ -44,7 +47,8 @@ export function AccountDialogs({
   onAdd,
   onSaveEdit,
   t,
-  masterKey
+  masterKey,
+  tags
 }: AccountDialogsProps) {
   const [addShowPassword, setAddShowPassword] = useState(false)
   const [editShowPassword, setEditShowPassword] = useState(false)
@@ -139,6 +143,15 @@ export function AccountDialogs({
                 </button>
               </div>
             </div>
+            <div className="grid gap-2">
+              <Label>标签</Label>
+              <TagMultiSelect
+                tags={tags}
+                value={form.tagIds ?? []}
+                onChange={(next) => setForm({ ...form, tagIds: next })}
+                testId="new-account-tags"
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => onAddingOpenChange(false)}>
@@ -216,6 +229,15 @@ export function AccountDialogs({
               <p className="mt-2 text-xs text-muted-foreground">
                 密码已加密存储. 出于安全, 编辑时不修改密码.
               </p>
+            </div>
+            <div className="grid gap-2">
+              <Label>标签</Label>
+              <TagMultiSelect
+                tags={tags}
+                value={form.tagIds ?? []}
+                onChange={(next) => setForm({ ...form, tagIds: next })}
+                testId="edit-account-tags"
+              />
             </div>
           </div>
           <DialogFooter>
