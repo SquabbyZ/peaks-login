@@ -1,7 +1,6 @@
 import { Check, X } from "lucide-react"
 import React from "react"
 
-import { COLOR_CLASSES } from "~/components/ui/tag-badge"
 import {
   Select,
   SelectContent,
@@ -9,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "~/components/ui/select"
+import { COLOR_CLASSES } from "~/components/ui/tag-badge"
 import { cn } from "~/lib/utils"
 import type { Tag } from "~/types"
 
