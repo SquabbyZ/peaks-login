@@ -6,14 +6,12 @@ import { Button } from "~/components/ui/button"
 import { Card, CardContent } from "~/components/ui/card"
 import { Input } from "~/components/ui/input"
 import { TagBadge } from "~/components/ui/tag-badge"
-import { Toaster } from "~/components/ui/toaster"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
 } from "~/components/ui/tooltip"
-import { useToast } from "~/hooks/use-toast"
 import { getAppSettings } from "~/lib/storage"
 import { useCombos } from "~/lib/useCombos"
 import { useTheme } from "~/lib/useTheme"
@@ -43,7 +41,6 @@ type LoginStatus = "idle" | "loading" | "success" | "error"
 function PopupIndex() {
   const { t, language, setLanguage } = useTranslation()
   const { resolvedTheme, toggleTheme } = useTheme()
-  const { toast } = useToast()
   const currentIcon = resolvedTheme === "dark" ? iconDark : icon
   const buttonCurrentIcon = resolvedTheme === "dark" ? icon : iconDark
 
@@ -146,7 +143,6 @@ function PopupIndex() {
       const msg = t("invalidConfiguration")
       setErrorMessage(msg)
       setLoginStatus("error")
-      toast({ title: t("error"), description: msg, variant: "destructive" })
       return
     }
 
@@ -181,11 +177,6 @@ function PopupIndex() {
         setLoginStatus("success")
         // 标记最近使用
         void touch(combo.id)
-        toast({
-          title: t("success"),
-          description: t("loginSuccessful"),
-          variant: "success"
-        })
         setTimeout(() => {
           setLoginStatus("idle")
           setActiveId(null)
@@ -194,7 +185,6 @@ function PopupIndex() {
         const msg = response?.error || t("error")
         setErrorMessage(msg)
         setLoginStatus("error")
-        toast({ title: t("error"), description: msg, variant: "destructive" })
         setTimeout(() => {
           setLoginStatus("idle")
           setActiveId(null)
@@ -204,11 +194,6 @@ function PopupIndex() {
       const message = error instanceof Error ? error.message : t("error")
       setErrorMessage(message)
       setLoginStatus("error")
-      toast({
-        title: t("error"),
-        description: message,
-        variant: "destructive"
-      })
       setTimeout(() => {
         setLoginStatus("idle")
         setActiveId(null)
@@ -464,7 +449,8 @@ function PopupIndex() {
                       </div>
                       <div className="mt-1 flex flex-wrap items-center gap-1">
                         {(() => {
-                          const effectiveTagId = combo.tagId ?? combo.tagIds?.[0]
+                          const effectiveTagId =
+                            combo.tagId ?? combo.tagIds?.[0]
                           const tag = effectiveTagId
                             ? tagMap.get(effectiveTagId)
                             : null
@@ -530,7 +516,6 @@ function PopupIndex() {
             </Button>
           </div>
         </div>
-        <Toaster />
       </div>
     </TooltipProvider>
   )
