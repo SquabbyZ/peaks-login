@@ -1,5 +1,10 @@
-import { useState, useEffect, useCallback } from "react"
-import { translations, type Language, type Translations } from "./i18n/translations"
+import { useCallback, useEffect, useState } from "react"
+
+import {
+  translations,
+  type Language,
+  type Translations
+} from "./i18n/translations"
 import { getLanguage, setLanguage as saveLanguage } from "./storage"
 
 const DEFAULT_LANGUAGE: Language = "zh"
@@ -20,9 +25,12 @@ export function useTranslation() {
     await saveLanguage(lang)
   }, [])
 
-  const t = useCallback((key: keyof Translations): string => {
-    return translations[language][key]
-  }, [language])
+  const t = useCallback(
+    (key: keyof Translations): string => {
+      return translations[language][key]
+    },
+    [language]
+  )
 
   return { t, language, setLanguage }
 }
