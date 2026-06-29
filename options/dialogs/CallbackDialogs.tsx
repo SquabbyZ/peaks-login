@@ -44,9 +44,9 @@ function TokenKeysEditor({
   t: (k: string) => string
 }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       <Label>{t("tokenKeys")}</Label>
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {tokenKeys.map((key, index) => (
           <div key={index} className="flex items-center gap-2">
             <Input
@@ -127,9 +127,9 @@ export function CallbackDialogs({
             <DialogTitle>{t("addCallbackAddress")}</DialogTitle>
             <DialogDescription>{t("callbackDescription")}</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+          <div className="grid gap-5 py-6">
+            <div className="space-y-4">
+              <div className="space-y-2.5">
                 <Label htmlFor="new-callback-name">{t("callbackName")}</Label>
                 <Input
                   id="new-callback-name"
@@ -138,7 +138,7 @@ export function CallbackDialogs({
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <Label htmlFor="new-callback-url">{t("callbackUrl")}</Label>
                 <Input
                   id="new-callback-url"
@@ -173,14 +173,14 @@ export function CallbackDialogs({
       </Dialog>
 
       <Dialog open={!!editing} onOpenChange={onEditingOpenChange}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t("editCallbackTitle")}</DialogTitle>
             <DialogDescription>
               {t("editCallbackDescription")}
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-5 py-6">
             <div className="grid gap-2">
               <Label htmlFor="edit-callback-name">{t("callbackName")}</Label>
               <Input

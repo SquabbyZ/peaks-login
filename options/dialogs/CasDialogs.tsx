@@ -53,7 +53,7 @@ export function CasDialogs({
             <DialogDescription>{t("casLoginDescription")}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-5 py-6">
-            <div className="grid grid-cols-2 gap-5">
+            <div className="space-y-5">
               <div className="space-y-2.5">
                 <Label htmlFor="new-cas-name">{t("casName")}</Label>
                 <Input
