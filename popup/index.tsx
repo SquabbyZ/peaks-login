@@ -64,6 +64,7 @@ const ComboCard = memo(function ComboCard({
   disabled,
   onClick
 }: ComboCardProps) {
+  const { t } = useTranslation()
   return (
     <Button
       data-testid={`combo-button-${combo.id}`}
