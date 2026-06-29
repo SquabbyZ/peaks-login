@@ -48,7 +48,9 @@ export function AccountDialogs({
 }: AccountDialogsProps) {
   const [addShowPassword, setAddShowPassword] = useState(false)
   const [editShowPassword, setEditShowPassword] = useState(false)
-  const [decryptedPassword, setDecryptedPassword] = useState<string | null>(null)
+  const [decryptedPassword, setDecryptedPassword] = useState<string | null>(
+    null
+  )
   const [decryptError, setDecryptError] = useState<string | null>(null)
 
   useEffect(() => {
