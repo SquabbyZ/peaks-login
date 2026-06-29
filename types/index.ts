@@ -62,6 +62,8 @@ export interface AppSettings {
   combos?: LoginCombo[]
   tags?: Tag[]
   masterKey?: string
+  /** 时间戳 — v1.0 popupState → combo 迁移执行完的 stamp, 防止每次启动重跑 */
+  migratedAt?: number
 }
 
 export interface LoginCombo {

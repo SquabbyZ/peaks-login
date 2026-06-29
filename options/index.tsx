@@ -68,6 +68,7 @@ import {
   generateId,
   getAppSettings,
   getMasterKey,
+  migrateLegacyPopupState,
   setAppSettings,
   setMasterKey
 } from "~/lib/storage"
@@ -146,6 +147,8 @@ function OptionsIndex() {
   }
 
   const loadSettings = useCallback(async () => {
+    // 先跑 v1.0 popupState → combo 的迁移 (idempotent, 二次启动直接 short-circuit)
+    await migrateLegacyPopupState()
     const loaded = await getAppSettings()
     // 注入默认 tag, 首次加载或老用户没有 tag 时
     if (!loaded.tags || loaded.tags.length === 0) {

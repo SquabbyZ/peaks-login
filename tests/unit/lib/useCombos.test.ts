@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it } from "vitest"
 import { setAppSettings } from "~/lib/storage"
 import { useCombos } from "~/lib/useCombos"
 
-import { resetChromeStorage } from "../setup"
+import { resetChromeStorage } from "../../setup"
 
 beforeEach(() => {
   resetChromeStorage()
