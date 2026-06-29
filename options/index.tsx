@@ -41,13 +41,13 @@ import {
   SelectValue
 } from "~/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs"
+import { Toaster } from "~/components/ui/toaster"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger
 } from "~/components/ui/tooltip"
-import { Toaster } from "~/components/ui/toaster"
 import { useToast } from "~/hooks/use-toast"
 import { encrypt, exportKey, generateMasterKey, importKey } from "~/lib/crypto"
 import {
@@ -168,9 +168,7 @@ function OptionsIndex() {
   }
 
   // 一键导入所有数据, 覆盖当前
-  const importAll = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const importAll = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     event.target.value = ""
     if (!file) return
@@ -549,90 +547,95 @@ function OptionsIndex() {
           <div className="flex items-center gap-2">
             <TooltipProvider>
               <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setLanguage(language === "en" ? "zh" : "en")}
-                  aria-label="切换语言"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                  <Globe className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>语言: {language === "en" ? "English" : "中文"}</p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => {
-                    const next = theme === "light" ? "dark" : theme === "dark" ? "system" : "light"
-                    setTheme(next)
-                  }}
-                  aria-label="切换主题"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                  {resolvedTheme === "dark" ? (
-                    <Moon className="h-4 w-4" />
-                  ) : (
-                    <Sun className="h-4 w-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  主题:{" "}
-                  {theme === "light"
-                    ? t("lightTheme")
-                    : theme === "dark"
-                      ? t("darkTheme")
-                      : t("systemTheme")}
-                </p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={exportAll}
-                  aria-label="导出全部配置"
-                  data-testid="export-all-button"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                  <Download className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>导出全部 (CAS / 回调 / 账号 / 组合)</p>
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() =>
-                    document.getElementById("import-all-file")?.click()
-                  }
-                  aria-label="导入全部配置"
-                  data-testid="import-all-button"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground">
-                  <Upload className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>导入全部 (覆盖当前)</p>
-              </TooltipContent>
-            </Tooltip>
-            <input
-              type="file"
-              accept=".json"
-              id="import-all-file"
-              onChange={importAll}
-              className="hidden"
-            />
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setLanguage(language === "en" ? "zh" : "en")}
+                    aria-label="切换语言"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                    <Globe className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>语言: {language === "en" ? "English" : "中文"}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => {
+                      const next =
+                        theme === "light"
+                          ? "dark"
+                          : theme === "dark"
+                            ? "system"
+                            : "light"
+                      setTheme(next)
+                    }}
+                    aria-label="切换主题"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                    {resolvedTheme === "dark" ? (
+                      <Moon className="h-4 w-4" />
+                    ) : (
+                      <Sun className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    主题:{" "}
+                    {theme === "light"
+                      ? t("lightTheme")
+                      : theme === "dark"
+                        ? t("darkTheme")
+                        : t("systemTheme")}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={exportAll}
+                    aria-label="导出全部配置"
+                    data-testid="export-all-button"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>导出全部 (CAS / 回调 / 账号 / 组合)</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() =>
+                      document.getElementById("import-all-file")?.click()
+                    }
+                    aria-label="导入全部配置"
+                    data-testid="import-all-button"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>导入全部 (覆盖当前)</p>
+                </TooltipContent>
+              </Tooltip>
+              <input
+                type="file"
+                accept=".json"
+                id="import-all-file"
+                onChange={importAll}
+                className="hidden"
+              />
             </TooltipProvider>
           </div>
         </div>

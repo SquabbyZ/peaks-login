@@ -86,9 +86,7 @@ function PopupIndex() {
     chrome.runtime.openOptionsPage()
   }
 
-  const openOptionsTab = (
-    tab: "combos" | "cas" | "callback" | "account"
-  ) => {
+  const openOptionsTab = (tab: "combos" | "cas" | "callback" | "account") => {
     // 通过 URL hash 传参, options 页读取后激活对应 tab
     const url = chrome.runtime.getURL(`options.html#${tab}`)
     chrome.tabs.create({ url })
