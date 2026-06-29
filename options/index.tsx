@@ -179,6 +179,27 @@ function OptionsIndex() {
     })
   }
 
+  // 一键清空当前 tab 的数据
+  const clearActiveTab = async () => {
+    const tab = activeTab
+    if (tab === "combos") {
+      for (const c of combos) {
+        await removeCombo(c.id)
+      }
+      toast({ title: t("success"), description: "已清空所有登录组合" })
+    } else {
+      const updated: AppSettings = { ...settings }
+      if (tab === "cas") updated.casConfigs = []
+      else if (tab === "callback") updated.callbackConfigs = []
+      else if (tab === "account") updated.accounts = []
+      await setAppSettings(updated)
+      setSettings(updated)
+      const label =
+        tab === "cas" ? "CAS 登录地址" : tab === "callback" ? "回调地址" : "账号"
+      toast({ title: t("success"), description: `已清空所有${label}` })
+    }
+  }
+
   // 一键导入所有数据, 覆盖当前
   const importAll = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
