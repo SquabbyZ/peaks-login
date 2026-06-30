@@ -126,6 +126,20 @@ describe("PopupIndex — combo list + one-click login", () => {
     )
   })
 
+  it("shows the account name next to the tag on every combo row", async () => {
+    render(<PopupIndex />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId("combos-list")).toBeTruthy()
+    })
+
+    const buttons = screen.getAllByTestId(/^combo-button-/)
+    expect(buttons).toHaveLength(3)
+    for (const button of buttons) {
+      expect(button.textContent).toContain("Dev")
+    }
+  })
+
   it("renders the Pin icon on pinned combo rows", async () => {
     render(<PopupIndex />)
 

@@ -46,6 +46,7 @@ type LoginStatus = "idle" | "loading" | "success" | "error"
 interface ComboCardProps {
   combo: LoginCombo
   tag: Tag | null | undefined
+  accountName: string | null | undefined
   isActive: boolean
   isLoading: boolean
   isSuccess: boolean
@@ -57,6 +58,7 @@ interface ComboCardProps {
 const ComboCard = memo(function ComboCard({
   combo,
   tag,
+  accountName,
   isActive,
   isLoading,
   isSuccess,
@@ -92,6 +94,12 @@ const ComboCard = memo(function ComboCard({
           ) : (
             <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
               {t("unconfigured")}
+            </span>
+          )}
+          {accountName && (
+            <span className="inline-flex max-w-full items-center gap-1 truncate text-[10px] text-muted-foreground">
+              <span aria-hidden="true">·</span>
+              <span className="truncate">{accountName}</span>
             </span>
           )}
         </div>
@@ -485,6 +493,7 @@ function PopupIndex() {
                     const tag = effectiveTagId
                       ? tagMap.get(effectiveTagId)
                       : null
+                    const account = accMap.get(combo.accountId)
                     const isActive = activeId === combo.id
                     const isLoading = isActive && loginStatus === "loading"
                     const isSuccess = isActive && loginStatus === "success"
@@ -495,6 +504,7 @@ function PopupIndex() {
                         key={combo.id}
                         combo={combo}
                         tag={tag}
+                        accountName={account?.name}
                         isActive={isActive}
                         isLoading={isLoading}
                         isSuccess={isSuccess}
