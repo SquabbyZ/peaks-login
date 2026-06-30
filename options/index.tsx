@@ -165,6 +165,22 @@ function OptionsIndex() {
     loadSettings()
   }, [loadSettings])
 
+  /**
+   * 写 storage 时统一走这条路径 — 每次先 `getAppSettings()` 拿真值,再 patch。
+   * 关键原因:combos 由 `useCombos` hook 维护 (变化不进本组件的 `settings` state),
+   * 直接 `...settings` 会带 stale combos 把 storage 里的真 combos 覆盖掉。
+   * patcher 接收 storage 中的最新值,返回完整 AppSettings,本函数负责写回
+   * storage + 同步本地 React state。
+   */
+  const updateSettings = async (
+    patcher: (current: AppSettings) => AppSettings
+  ): Promise<void> => {
+    const current = await getAppSettings()
+    const next = patcher(current)
+    await setAppSettings(next)
+    setSettings(next)
+  }
+
   const initMasterKey = async () => {
     const key = await generateMasterKey()
     const keyString = await exportKey(key)
@@ -219,29 +235,30 @@ function OptionsIndex() {
     })
   }
 
-  // 一键清空当前 tab 的数据 (统一通过 setAppSettings 走, 跟其他 tab 一致)
+  // 一键清空当前 tab 的数据 (统一通过 updateSettings 走, 跟其他 tab 一致)
   const clearActiveTab = async () => {
     const tab = activeTab
-    const updated: AppSettings = { ...settings }
     let label = ""
-    if (tab === "combos") {
-      updated.combos = []
-      label = t("combos")
-    } else if (tab === "cas") {
-      updated.casConfigs = []
-      label = t("casLoginAddresses")
-    } else if (tab === "callback") {
-      updated.callbackConfigs = []
-      label = t("callbackAddresses")
-    } else if (tab === "account") {
-      updated.accounts = []
-      label = t("accounts")
-    } else if (tab === "tags") {
-      updated.tags = buildDefaultTags()
-      label = t("tagManagement")
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => {
+      let next: AppSettings = current
+      if (tab === "combos") {
+        next = { ...current, combos: [] }
+        label = t("combos")
+      } else if (tab === "cas") {
+        next = { ...current, casConfigs: [] }
+        label = t("casLoginAddresses")
+      } else if (tab === "callback") {
+        next = { ...current, callbackConfigs: [] }
+        label = t("callbackAddresses")
+      } else if (tab === "account") {
+        next = { ...current, accounts: [] }
+        label = t("accounts")
+      } else if (tab === "tags") {
+        next = { ...current, tags: buildDefaultTags() }
+        label = t("tagManagement")
+      }
+      return next
+    })
     toast({ title: t("success"), description: t("resetSuccess")(label) })
   }
 
@@ -303,12 +320,10 @@ function OptionsIndex() {
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
-    const updated = {
-      ...settings,
-      casConfigs: [...settings.casConfigs, config]
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => ({
+      ...current,
+      casConfigs: [...current.casConfigs, config]
+    }))
     toast({
       title: t("success"),
       description: t("casAddedSuccess"),
@@ -316,9 +331,9 @@ function OptionsIndex() {
     })
   }
   const handleEditCas = async (id: string, data: CasFormData) => {
-    const updated = {
-      ...settings,
-      casConfigs: settings.casConfigs.map((c) =>
+    await updateSettings((current) => ({
+      ...current,
+      casConfigs: current.casConfigs.map((c) =>
         c.id === id
           ? {
               ...c,
@@ -332,9 +347,7 @@ function OptionsIndex() {
             }
           : c
       )
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    }))
     toast({
       title: t("success"),
       description: t("casUpdatedSuccess"),
@@ -342,12 +355,10 @@ function OptionsIndex() {
     })
   }
   const handleDeleteCas = async (id: string) => {
-    const updated = {
-      ...settings,
-      casConfigs: settings.casConfigs.filter((c) => c.id !== id)
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => ({
+      ...current,
+      casConfigs: current.casConfigs.filter((c) => c.id !== id)
+    }))
     toast({
       title: t("success"),
       description: t("casDeletedSuccess"),
@@ -366,12 +377,10 @@ function OptionsIndex() {
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
-    const updated = {
-      ...settings,
-      casConfigs: [...settings.casConfigs, newConfig]
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => ({
+      ...current,
+      casConfigs: [...current.casConfigs, newConfig]
+    }))
     await copyToClipboard(cas.url, newConfig.id)
   }
   const exportCas = () =>
@@ -393,15 +402,15 @@ function OptionsIndex() {
         createdAt: cas.createdAt || createTimestamp(),
         updatedAt: createTimestamp()
       }))
-      const merged = [...settings.casConfigs]
-      imported.forEach((cas: CasConfig) => {
-        const idx = merged.findIndex((c) => c.id === cas.id)
-        if (idx >= 0) merged[idx] = cas
-        else merged.push(cas)
+      await updateSettings((current) => {
+        const merged = [...current.casConfigs]
+        imported.forEach((cas: CasConfig) => {
+          const idx = merged.findIndex((c) => c.id === cas.id)
+          if (idx >= 0) merged[idx] = cas
+          else merged.push(cas)
+        })
+        return { ...current, casConfigs: merged }
       })
-      const updated = { ...settings, casConfigs: merged }
-      await setAppSettings(updated)
-      setSettings(updated)
       toast({
         title: t("success"),
         description: t("importSuccess"),
@@ -428,12 +437,10 @@ function OptionsIndex() {
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
-    const updated = {
-      ...settings,
-      callbackConfigs: [...settings.callbackConfigs, config]
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => ({
+      ...current,
+      callbackConfigs: [...current.callbackConfigs, config]
+    }))
     toast({
       title: t("success"),
       description: t("callbackAddedSuccess"),
@@ -441,9 +448,9 @@ function OptionsIndex() {
     })
   }
   const handleEditCallback = async (id: string, data: CallbackFormData) => {
-    const updated = {
-      ...settings,
-      callbackConfigs: settings.callbackConfigs.map((c) =>
+    await updateSettings((current) => ({
+      ...current,
+      callbackConfigs: current.callbackConfigs.map((c) =>
         c.id === id
           ? {
               ...c,
@@ -456,9 +463,7 @@ function OptionsIndex() {
             }
           : c
       )
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    }))
     toast({
       title: t("success"),
       description: t("callbackUpdatedSuccess"),
@@ -466,12 +471,10 @@ function OptionsIndex() {
     })
   }
   const handleDeleteCallback = async (id: string) => {
-    const updated = {
-      ...settings,
-      callbackConfigs: settings.callbackConfigs.filter((c) => c.id !== id)
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => ({
+      ...current,
+      callbackConfigs: current.callbackConfigs.filter((c) => c.id !== id)
+    }))
     toast({
       title: t("success"),
       description: t("callbackDeletedSuccess"),
@@ -489,12 +492,10 @@ function OptionsIndex() {
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
-    const updated = {
-      ...settings,
-      callbackConfigs: [...settings.callbackConfigs, newConfig]
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => ({
+      ...current,
+      callbackConfigs: [...current.callbackConfigs, newConfig]
+    }))
     await copyToClipboard(cb.url, newConfig.id)
   }
   const exportCallback = () =>
@@ -519,15 +520,15 @@ function OptionsIndex() {
         createdAt: cb.createdAt || createTimestamp(),
         updatedAt: createTimestamp()
       }))
-      const merged = [...settings.callbackConfigs]
-      imported.forEach((cb: CallbackConfig) => {
-        const idx = merged.findIndex((c) => c.id === cb.id)
-        if (idx >= 0) merged[idx] = cb
-        else merged.push(cb)
+      await updateSettings((current) => {
+        const merged = [...current.callbackConfigs]
+        imported.forEach((cb: CallbackConfig) => {
+          const idx = merged.findIndex((c) => c.id === cb.id)
+          if (idx >= 0) merged[idx] = cb
+          else merged.push(cb)
+        })
+        return { ...current, callbackConfigs: merged }
       })
-      const updated = { ...settings, callbackConfigs: merged }
-      await setAppSettings(updated)
-      setSettings(updated)
       toast({
         title: t("success"),
         description: t("importSuccess"),
@@ -564,9 +565,10 @@ function OptionsIndex() {
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
-    const updated = { ...settings, accounts: [...settings.accounts, config] }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => ({
+      ...current,
+      accounts: [...current.accounts, config]
+    }))
     toast({
       title: t("success"),
       description: t("accountAddedSuccess"),
@@ -574,9 +576,9 @@ function OptionsIndex() {
     })
   }
   const handleEditAccount = async (id: string, data: AccountFormData) => {
-    const updated = {
-      ...settings,
-      accounts: settings.accounts.map((a) =>
+    await updateSettings((current) => ({
+      ...current,
+      accounts: current.accounts.map((a) =>
         a.id === id
           ? {
               ...a,
@@ -587,17 +589,13 @@ function OptionsIndex() {
             }
           : a
       )
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    }))
   }
   const handleDeleteAccount = async (id: string) => {
-    const updated = {
-      ...settings,
-      accounts: settings.accounts.filter((a) => a.id !== id)
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => ({
+      ...current,
+      accounts: current.accounts.filter((a) => a.id !== id)
+    }))
     toast({
       title: t("success"),
       description: t("accountDeletedSuccess"),
@@ -614,9 +612,10 @@ function OptionsIndex() {
       createdAt: createTimestamp(),
       updatedAt: createTimestamp()
     }
-    const updated = { ...settings, accounts: [...settings.accounts, newConfig] }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => ({
+      ...current,
+      accounts: [...current.accounts, newConfig]
+    }))
     await copyToClipboard(acc.username, newConfig.id)
   }
   const handleAddTag = async (data: TagFormData) => {
@@ -628,9 +627,10 @@ function OptionsIndex() {
       createdAt: now,
       updatedAt: now
     }
-    const updated = { ...settings, tags: [...(settings.tags ?? []), tag] }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => ({
+      ...current,
+      tags: [...(current.tags ?? []), tag]
+    }))
     toast({
       title: t("success"),
       description: t("tagCreatedSuccess"),
@@ -638,9 +638,9 @@ function OptionsIndex() {
     })
   }
   const handleEditTag = async (id: string, data: TagFormData) => {
-    const updated = {
-      ...settings,
-      tags: (settings.tags ?? []).map((tag) =>
+    await updateSettings((current) => ({
+      ...current,
+      tags: (current.tags ?? []).map((tag) =>
         tag.id === id
           ? {
               ...tag,
@@ -650,9 +650,7 @@ function OptionsIndex() {
             }
           : tag
       )
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    }))
     toast({
       title: t("success"),
       description: t("tagUpdatedSuccess"),
@@ -660,12 +658,10 @@ function OptionsIndex() {
     })
   }
   const handleDeleteTag = async (id: string) => {
-    const updated = {
-      ...settings,
-      tags: (settings.tags ?? []).filter((tag) => tag.id !== id)
-    }
-    await setAppSettings(updated)
-    setSettings(updated)
+    await updateSettings((current) => ({
+      ...current,
+      tags: (current.tags ?? []).filter((tag) => tag.id !== id)
+    }))
     toast({
       title: t("success"),
       description: t("tagDeletedSuccess"),

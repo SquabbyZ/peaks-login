@@ -239,6 +239,69 @@ describe("getCombos / setCombos", () => {
     expect(settings.casConfigs).toHaveLength(1)
   })
 
+  it("regression: combos survive an unrelated field write when caller uses fresh-read-then-patch", async () => {
+    // 场景:选项页里有两条独立的存储路径 —— useCombos 写 combos,options handler
+    // 改 CAS/账号/回调/标签。之前的 bug 是 handler 用 stale React state (`...settings`)
+    // 写 storage,把 combos 覆盖掉了。
+    // 修复后:handler 在 updateSettings() 内调 `getAppSettings()` 拿真值再 patch。
+    // 这条测试断言这条 fresh-read-then-patch 路径确实能保住 combos。
+    const now = Date.now()
+    await setAppSettings({
+      casConfigs: [],
+      callbackConfigs: [],
+      accounts: [],
+      combos: [
+        {
+          id: "c-A",
+          name: "A",
+          casId: "cas-1",
+          accountId: "acc-1",
+          callbackId: "cb-1",
+          createdAt: now,
+          updatedAt: now
+        },
+        {
+          id: "c-B",
+          name: "B",
+          casId: "cas-1",
+          accountId: "acc-1",
+          callbackId: "cb-1",
+          createdAt: now,
+          updatedAt: now
+        },
+        {
+          id: "c-C",
+          name: "C",
+          casId: "cas-1",
+          accountId: "acc-1",
+          callbackId: "cb-1",
+          createdAt: now,
+          updatedAt: now
+        }
+      ]
+    })
+
+    // 模拟修复后的 handler:每次写之前 fresh read
+    const current = await getAppSettings()
+    await setAppSettings({
+      ...current,
+      casConfigs: [
+        {
+          id: "cas-new",
+          name: "prod",
+          url: "https://x",
+          createdAt: now,
+          updatedAt: now
+        }
+      ]
+    })
+
+    const after = await getAppSettings()
+    expect(after.combos).toHaveLength(3)
+    expect(after.combos?.map((c) => c.id)).toEqual(["c-A", "c-B", "c-C"])
+    expect(after.casConfigs).toHaveLength(1)
+  })
+
   it("existing combos survive a migration run (regression: lost on upgrade)", async () => {
     // 用户场景: 已有 combos + migratedAt 已 stamp
     const now = Date.now()
